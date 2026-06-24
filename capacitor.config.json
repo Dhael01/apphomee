@@ -1,0 +1,14 @@
+{
+  "appId": "com.nuestrohogar.app",
+  "appName": "Nuestro Hogar",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

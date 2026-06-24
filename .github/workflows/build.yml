@@ -1,0 +1,171 @@
+name: Build — Desktop & Android
+
+on:
+  push:
+    branches: [main]
+  create:
+    tags:
+      - "v*"
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. INSTALADORES DE ESCRITORIO (Tauri)
+  # ─────────────────────────────────────────────
+  build-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: "--target x86_64-pc-windows-msvc"
+          - platform: macos-latest
+            args: "--target x86_64-apple-darwin"
+          - platform: ubuntu-22.04
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+    name: Desktop (${{ matrix.platform }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node para generar íconos
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Node deps
+        run: npm install
+
+      # Dependencias del sistema en Linux
+      - name: Linux system deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev \
+            libssl-dev
+
+      # Rust
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'x86_64-apple-darwin,aarch64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      # Generar íconos PNG desde el SVG
+      - name: Generate icons
+        run: node scripts/generate-icons.mjs
+
+      # Copiar PNG de 256 px como icon.ico (Tauri lo convierte en Windows)
+      - name: Prepare Windows icon
+        if: matrix.platform == 'windows-latest'
+        run: |
+          Copy-Item src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
+        shell: pwsh
+
+      # Generar icns en macOS con sips
+      - name: Build icns (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          mkdir -p src-tauri/icons/icon.iconset
+          sips -z 16   16   src-tauri/icons/32x32.png  --out src-tauri/icons/icon.iconset/icon_16x16.png
+          sips -z 32   32   src-tauri/icons/32x32.png  --out src-tauri/icons/icon.iconset/icon_16x16@2x.png
+          sips -z 32   32   src-tauri/icons/32x32.png  --out src-tauri/icons/icon.iconset/icon_32x32.png
+          sips -z 64   64   src-tauri/icons/128x128.png --out src-tauri/icons/icon.iconset/icon_32x32@2x.png
+          sips -z 128  128  src-tauri/icons/128x128.png --out src-tauri/icons/icon.iconset/icon_128x128.png
+          sips -z 256  256  src-tauri/icons/128x128@2x.png --out src-tauri/icons/icon.iconset/icon_128x128@2x.png
+          sips -z 256  256  src-tauri/icons/128x128@2x.png --out src-tauri/icons/icon.iconset/icon_256x256.png
+          sips -z 512  512  src-tauri/icons/512x512.png --out src-tauri/icons/icon.iconset/icon_256x256@2x.png
+          sips -z 512  512  src-tauri/icons/512x512.png --out src-tauri/icons/icon.iconset/icon_512x512.png
+          iconutil -c icns src-tauri/icons/icon.iconset -o src-tauri/icons/icon.icns
+
+      # Linux: usar el PNG como ico de fallback
+      - name: Prepare Linux icon
+        if: matrix.platform == 'ubuntu-22.04'
+        run: cp src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
+
+      # Compilar con tauri-action (sin firma de código)
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: "Nuestro Hogar ${{ github.ref_name }}"
+          releaseBody: |
+            ## 🏠 Nuestro Hogar — instaladores sin firma
+
+            > **Windows:** al abrir el instalador, haz clic en "Más información" → "Ejecutar de todas formas".
+            > **macOS:** haz clic derecho sobre la app → Abrir → Abrir.
+            > **Linux:** dale permisos de ejecución: `chmod +x NuestroHogar.AppImage`
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  # ─────────────────────────────────────────────
+  # 2. APK ANDROID (Capacitor + Gradle)
+  # ─────────────────────────────────────────────
+  build-android:
+    runs-on: ubuntu-22.04
+    name: Android APK
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Node deps
+        run: npm install
+
+      - name: Generate icons
+        run: node scripts/generate-icons.mjs
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # npx cap sync copia www/ al proyecto Android y actualiza los plugins
+      - name: Capacitor sync
+        run: npx cap sync android
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK (sin firma de Play Store)
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuestro-hogar-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      # Si es un tag, también adjuntarlo a la Release
+      - name: Attach APK to Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

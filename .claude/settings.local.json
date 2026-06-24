@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Copy-Item \"C:\\\\Users\\\\Adolf\\\\Downloads\\\\index.html\" \"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\\\\www\\\\index.html\" -Force)",
+      "PowerShell(cargo --version 2>$null)",
+      "PowerShell(rustup --version 2>$null)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\\\\src-tauri\\\\src\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\\\\src-tauri\\\\icons\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\\\\src-tauri\\\\capabilities\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\\\\.github\\\\workflows\")",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\" | Where-Object { !$_.PSIsContainer } | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"C:\\\\Users\\\\Adolf\\\\OneDrive\\\\Escritorio\\\\proyectoApphome\\\\\", \"\"\\) })"
+    ]
+  }
+}
