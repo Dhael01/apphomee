@@ -3,7 +3,6 @@ name: Build — Desktop & Android
 on:
   push:
     branches: [main]
-  create:
     tags:
       - "v*"
 
