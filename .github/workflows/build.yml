@@ -29,16 +29,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node para generar íconos
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install Node deps
         run: npm install
 
-      # Dependencias del sistema en Linux
       - name: Linux system deps
         if: matrix.platform == 'ubuntu-22.04'
         run: |
@@ -51,7 +49,6 @@ jobs:
             libgtk-3-dev \
             libssl-dev
 
-      # Rust
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -62,39 +59,33 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      # Generar íconos PNG desde el SVG
       - name: Generate icons
         run: node scripts/generate-icons.mjs
 
-      # Copiar PNG de 256 px como icon.ico (Tauri lo convierte en Windows)
       - name: Prepare Windows icon
         if: matrix.platform == 'windows-latest'
-        run: |
-          Copy-Item src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
         shell: pwsh
+        run: Copy-Item src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
 
-      # Generar icns en macOS con sips
       - name: Build icns (macOS)
         if: matrix.platform == 'macos-latest'
         run: |
           mkdir -p src-tauri/icons/icon.iconset
-          sips -z 16   16   src-tauri/icons/32x32.png  --out src-tauri/icons/icon.iconset/icon_16x16.png
-          sips -z 32   32   src-tauri/icons/32x32.png  --out src-tauri/icons/icon.iconset/icon_16x16@2x.png
-          sips -z 32   32   src-tauri/icons/32x32.png  --out src-tauri/icons/icon.iconset/icon_32x32.png
-          sips -z 64   64   src-tauri/icons/128x128.png --out src-tauri/icons/icon.iconset/icon_32x32@2x.png
-          sips -z 128  128  src-tauri/icons/128x128.png --out src-tauri/icons/icon.iconset/icon_128x128.png
-          sips -z 256  256  src-tauri/icons/128x128@2x.png --out src-tauri/icons/icon.iconset/icon_128x128@2x.png
-          sips -z 256  256  src-tauri/icons/128x128@2x.png --out src-tauri/icons/icon.iconset/icon_256x256.png
-          sips -z 512  512  src-tauri/icons/512x512.png --out src-tauri/icons/icon.iconset/icon_256x256@2x.png
-          sips -z 512  512  src-tauri/icons/512x512.png --out src-tauri/icons/icon.iconset/icon_512x512.png
+          sips -z 16  16  src-tauri/icons/32x32.png        --out src-tauri/icons/icon.iconset/icon_16x16.png
+          sips -z 32  32  src-tauri/icons/32x32.png        --out src-tauri/icons/icon.iconset/icon_16x16@2x.png
+          sips -z 32  32  src-tauri/icons/32x32.png        --out src-tauri/icons/icon.iconset/icon_32x32.png
+          sips -z 64  64  src-tauri/icons/128x128.png      --out src-tauri/icons/icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 src-tauri/icons/128x128.png      --out src-tauri/icons/icon.iconset/icon_128x128.png
+          sips -z 256 256 src-tauri/icons/128x128@2x.png   --out src-tauri/icons/icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 src-tauri/icons/128x128@2x.png   --out src-tauri/icons/icon.iconset/icon_256x256.png
+          sips -z 512 512 src-tauri/icons/512x512.png      --out src-tauri/icons/icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 src-tauri/icons/512x512.png      --out src-tauri/icons/icon.iconset/icon_512x512.png
           iconutil -c icns src-tauri/icons/icon.iconset -o src-tauri/icons/icon.icns
 
-      # Linux: usar el PNG como ico de fallback
       - name: Prepare Linux icon
         if: matrix.platform == 'ubuntu-22.04'
         run: cp src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
 
-      # Compilar con tauri-action (sin firma de código)
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -105,9 +96,9 @@ jobs:
           releaseBody: |
             ## 🏠 Nuestro Hogar — instaladores sin firma
 
-            > **Windows:** al abrir el instalador, haz clic en "Más información" → "Ejecutar de todas formas".
-            > **macOS:** haz clic derecho sobre la app → Abrir → Abrir.
-            > **Linux:** dale permisos de ejecución: `chmod +x NuestroHogar.AppImage`
+            > **Windows:** haz clic en "Más información" → "Ejecutar de todas formas".
+            > **macOS:** clic derecho sobre la app → Abrir → Abrir.
+            > **Linux:** `chmod +x NuestroHogar.AppImage && ./NuestroHogar.AppImage`
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -125,7 +116,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install Node deps
         run: npm install
@@ -142,14 +133,18 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # npx cap sync copia www/ al proyecto Android y actualiza los plugins
+      # Genera el proyecto android/ por primera vez
+      - name: Capacitor add android
+        run: npx cap add android
+
+      # Copia www/ al proyecto Android y actualiza plugins
       - name: Capacitor sync
         run: npx cap sync android
 
       - name: Make Gradle wrapper executable
         run: chmod +x android/gradlew
 
-      - name: Build debug APK (sin firma de Play Store)
+      - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
@@ -160,7 +155,6 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-      # Si es un tag, también adjuntarlo a la Release
       - name: Attach APK to Release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
