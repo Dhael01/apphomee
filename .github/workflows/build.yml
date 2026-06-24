@@ -8,9 +8,6 @@ on:
       - "v*"
 
 jobs:
-  # ─────────────────────────────────────────────
-  # 1. INSTALADORES DE ESCRITORIO (Tauri)
-  # ─────────────────────────────────────────────
   build-desktop:
     strategy:
       fail-fast: false
@@ -22,10 +19,8 @@ jobs:
             args: "--target x86_64-apple-darwin"
           - platform: ubuntu-22.04
             args: ""
-
     runs-on: ${{ matrix.platform }}
     name: Desktop (${{ matrix.platform }})
-
     steps:
       - uses: actions/checkout@v4
 
@@ -59,32 +54,11 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      - name: Generate icons
+      - name: Generate icon source
         run: node scripts/generate-icons.mjs
 
-      - name: Prepare Windows icon
-        if: matrix.platform == 'windows-latest'
-        shell: pwsh
-        run: Copy-Item src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
-
-      - name: Build icns (macOS)
-        if: matrix.platform == 'macos-latest'
-        run: |
-          mkdir -p src-tauri/icons/icon.iconset
-          sips -z 16  16  src-tauri/icons/32x32.png        --out src-tauri/icons/icon.iconset/icon_16x16.png
-          sips -z 32  32  src-tauri/icons/32x32.png        --out src-tauri/icons/icon.iconset/icon_16x16@2x.png
-          sips -z 32  32  src-tauri/icons/32x32.png        --out src-tauri/icons/icon.iconset/icon_32x32.png
-          sips -z 64  64  src-tauri/icons/128x128.png      --out src-tauri/icons/icon.iconset/icon_32x32@2x.png
-          sips -z 128 128 src-tauri/icons/128x128.png      --out src-tauri/icons/icon.iconset/icon_128x128.png
-          sips -z 256 256 src-tauri/icons/128x128@2x.png   --out src-tauri/icons/icon.iconset/icon_128x128@2x.png
-          sips -z 256 256 src-tauri/icons/128x128@2x.png   --out src-tauri/icons/icon.iconset/icon_256x256.png
-          sips -z 512 512 src-tauri/icons/512x512.png      --out src-tauri/icons/icon.iconset/icon_256x256@2x.png
-          sips -z 512 512 src-tauri/icons/512x512.png      --out src-tauri/icons/icon.iconset/icon_512x512.png
-          iconutil -c icns src-tauri/icons/icon.iconset -o src-tauri/icons/icon.icns
-
-      - name: Prepare Linux icon
-        if: matrix.platform == 'ubuntu-22.04'
-        run: cp src-tauri/icons/icon.ico.png src-tauri/icons/icon.ico
+      - name: Generate Tauri icons
+        run: npx --yes @tauri-apps/cli@^2 icon src-tauri/icons/icon-source.png
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -95,21 +69,16 @@ jobs:
           releaseName: "Nuestro Hogar ${{ github.ref_name }}"
           releaseBody: |
             ## 🏠 Nuestro Hogar — instaladores sin firma
-
-            > **Windows:** haz clic en "Más información" → "Ejecutar de todas formas".
-            > **macOS:** clic derecho sobre la app → Abrir → Abrir.
-            > **Linux:** `chmod +x NuestroHogar.AppImage && ./NuestroHogar.AppImage`
+            > Windows: "Más información" → "Ejecutar de todas formas".
+            > macOS: clic derecho → Abrir → Abrir.
+            > Linux: chmod +x NuestroHogar.AppImage
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
-  # ─────────────────────────────────────────────
-  # 2. APK ANDROID (Capacitor + Gradle)
-  # ─────────────────────────────────────────────
   build-android:
     runs-on: ubuntu-22.04
     name: Android APK
-
     steps:
       - uses: actions/checkout@v4
 
@@ -130,15 +99,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 1º crear el proyecto android/ (proyecto Gradle completo)
       - name: Capacitor add android
         run: npx cap add android
 
-      # 2º generar íconos (ya con android/ existiendo, escribe los launcher)
       - name: Generate icons
         run: node scripts/generate-icons.mjs
 
-      # 3º copiar www/ y actualizar plugins
       - name: Capacitor sync
         run: npx cap sync android
 
