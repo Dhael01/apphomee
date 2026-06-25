@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    nuestro_hogar_lib::run()
+    pawnest_lib::run()
 }

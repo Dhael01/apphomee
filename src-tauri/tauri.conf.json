@@ -1,14 +1,14 @@
 {
-  "productName": "Nuestro Hogar",
+  "productName": "pawnest",
   "version": "1.0.0",
-  "identifier": "com.nuestrohogar.app",
+  "identifier": "com.pawnest.app",
   "build": {
     "frontendDist": "../www"
   },
   "app": {
     "windows": [
       {
-        "title": "Nuestro Hogar",
+        "title": "pawnest",
         "width": 480,
         "height": 820,
         "resizable": true,

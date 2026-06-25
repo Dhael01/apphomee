@@ -1,7 +1,7 @@
 {
-  "name": "nuestro-hogar",
+  "name": "pawnest",
   "version": "1.0.0",
-  "description": "App de gestión del hogar compartido",
+  "description": "pawnest — app de gestión del hogar compartido",
   "private": true,
   "scripts": {
     "icons": "node scripts/generate-icons.mjs",

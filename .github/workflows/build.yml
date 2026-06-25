@@ -67,12 +67,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-          releaseName: "Nuestro Hogar ${{ github.ref_name }}"
+          releaseName: "pawnest ${{ github.ref_name }}"
           releaseBody: |
-            ## 🏠 Nuestro Hogar — instaladores sin firma
+            ## 🐾 pawnest — instaladores sin firma
             > Windows: "Más información" → "Ejecutar de todas formas".
             > macOS: clic derecho → Abrir → Abrir.
-            > Linux: chmod +x NuestroHogar.AppImage
+            > Linux: chmod +x pawnest.AppImage
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -119,7 +119,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: nuestro-hogar-android-debug
+          name: pawnest-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 

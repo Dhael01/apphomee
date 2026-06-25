@@ -3,6 +3,12 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Repo de tutorial anidado (no forma parte de pawnest)
+desktop-tutorial/
+
+# Respaldo local del logo original (pesado, no versionar)
+www/logo-original.png
+
 # Tauri build output
 src-tauri/target/
 src-tauri/gen/

@@ -1,6 +1,6 @@
 {
-  "appId": "com.nuestrohogar.app",
-  "appName": "Nuestro Hogar",
+  "appId": "com.pawnest.app",
+  "appName": "pawnest",
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {

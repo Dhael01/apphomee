@@ -1,16 +1,16 @@
 [package]
-name = "nuestro-hogar"
+name = "pawnest"
 version = "1.0.0"
-description = "Nuestro Hogar — app de gestión del hogar"
+description = "pawnest — app de gestión del hogar"
 authors = []
 edition = "2021"
 
 [lib]
-name = "nuestro_hogar_lib"
+name = "pawnest_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [[bin]]
-name = "nuestro-hogar"
+name = "pawnest"
 path = "src/main.rs"
 
 [build-dependencies]

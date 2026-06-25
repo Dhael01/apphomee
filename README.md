@@ -1,4 +1,4 @@
-# 🏠 Nuestro Hogar
+# 🐾 pawnest
 
 App de gestión del hogar compartido: cuentas, despensa, ahorros, quehaceres y más.  
 Funciona en **Windows, macOS, Linux** (escritorio) y **Android** (móvil).
@@ -14,10 +14,10 @@ Funciona en **Windows, macOS, Linux** (escritorio) y **Android** (móvil).
 
 | Sistema | Archivo a descargar |
 |---|---|
-| Windows | `Nuestro.Hogar_x.x.x_x64-setup.exe` o `.msi` |
-| macOS | `Nuestro.Hogar_x.x.x_x64.dmg` |
-| Linux | `nuestro-hogar_x.x.x_amd64.AppImage` |
-| Android | `nuestro-hogar-android-debug.apk` |
+| Windows | `pawnest_x.x.x_x64-setup.exe` o `.msi` |
+| macOS | `pawnest_x.x.x_x64.dmg` |
+| Linux | `pawnest_x.x.x_amd64.AppImage` |
+| Android | `pawnest-android-debug.apk` |
 
 ---
 
@@ -42,8 +42,8 @@ Los instaladores son funcionales pero **no tienen firma de código de pago**. Ca
 
 ### Linux — AppImage
 ```bash
-chmod +x nuestro-hogar_*.AppImage
-./nuestro-hogar_*.AppImage
+chmod +x pawnest_*.AppImage
+./pawnest_*.AppImage
 ```
 
 ### Android — APK fuera de Play Store

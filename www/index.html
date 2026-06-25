@@ -3,45 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#1d9e75">
-<title>Nuestro Hogar</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231d9e75'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle' fill='white'%3E%F0%9F%8F%A0%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#2e7d6a">
+<title>pawnest</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232e7d6a'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle' fill='white'%3E%F0%9F%8F%A0%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f5f4ef;--surface:#ffffff;--surface2:#f0eee7;--surface3:#e7e4da;
-    --text:#2c2c2a;--text2:#5f5e5a;--text3:#888780;--border:#e2dfd6;--border2:#cfccc2;
-    --info-bg:#e6f1fb;--info:#185fa5;--success-bg:#e1f5ee;--success:#0f6e56;
-    --warning-bg:#faeeda;--warning:#854f0b;--danger-bg:#fcebeb;--danger:#a32d2d;
-    --radius:10px;--radius-lg:14px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg:#f3f5f1;--surface:#ffffff;--surface2:#eaeee7;--surface3:#dfe4db;
+    --text:#2a302c;--text2:#59615b;--text3:#8a918a;--border:#e7ebe3;--border2:#d4dacf;
+    --info-bg:#e2efe9;--info:#2e7d6a;--success-bg:#e3f0e3;--success:#3c7d50;
+    --warning-bg:#f6edda;--warning:#94661f;--danger-bg:#f6e6e2;--danger:#b05444;
+    --radius:12px;--radius-lg:16px;
+    --shadow:0 1px 2px rgba(40,55,48,.04),0 4px 14px rgba(40,55,48,.05);
+    --shadow-soft:0 1px 3px rgba(40,55,48,.05);
+    --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;-webkit-text-size-adjust:100%;}
   body{padding-bottom:84px;}
   input,select,textarea,button{font-family:inherit;font-size:16px;}
-  input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);transition:border-color .15s ease,box-shadow .15s ease;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px var(--info-bg);}
   textarea{resize:vertical;}
   button{cursor:pointer;}
-  .topbar{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);}
-  .brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:600;}
+  .topbar{position:sticky;top:0;z-index:30;background:rgba(243,245,241,.82);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);padding:13px 16px 9px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);}
+  .brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;letter-spacing:-.01em;}
+  .brandbox{display:inline-block;line-height:0;}
+  .menuwrap{position:relative;}
+  .menubtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+  .menubtn.on{background:var(--info-bg);color:var(--info);border-color:transparent;}
+  .menu{position:absolute;top:44px;right:0;z-index:50;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:6px;opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;}
+  .menu.open{opacity:1;transform:translateY(0);pointer-events:auto;}
+  .menu button{width:100%;border:none;background:transparent;color:var(--text);font-size:14px;font-weight:600;text-align:left;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;}
+  .menu button .ni{font-size:18px;line-height:1;}
+  .menu button.on{background:var(--info-bg);color:var(--info);}
   .brand .ico{font-size:22px;}
   .right{display:flex;align-items:center;gap:8px;}
   .pts{display:none;align-items:center;gap:4px;font-size:13px;background:var(--warning-bg);color:var(--warning);padding:4px 10px;border-radius:var(--radius);font-weight:600;}
-  select.user{width:auto;padding:6px 8px;font-size:14px;max-width:130px;}
+  .user{font-size:14px;font-weight:600;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 0;}
   .status{font-size:12px;color:var(--text3);padding:4px 14px;min-height:14px;display:flex;align-items:center;gap:6px;}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex:none;}
   .dot.on{background:#1d9e75;} .dot.off{background:#d85a30;}
   .wrap{padding:8px 14px 20px;max-width:680px;margin:0 auto;}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;margin-bottom:9px;}
-  .card.soft{background:var(--surface2);border-color:transparent;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-soft);}
+  .card.soft{background:var(--surface2);border-color:transparent;box-shadow:none;}
   .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px;}
-  .metric{background:var(--surface2);border-radius:var(--radius);padding:11px 13px;}
+  .metric{background:var(--surface2);border-radius:var(--radius);padding:12px 14px;}
   .metric .l{font-size:12px;color:var(--text2);margin-bottom:3px;}
-  .metric .v{font-size:21px;font-weight:600;}
+  .metric .v{font-size:22px;font-weight:700;letter-spacing:-.02em;}
   .lbl{font-size:13px;color:var(--text2);display:block;margin-bottom:4px;}
   .field{margin-bottom:8px;}
-  .btn{padding:9px 13px;font-size:14px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-weight:500;display:inline-flex;align-items:center;gap:6px;justify-content:center;}
-  .btn:active{transform:scale(.98);}
-  .btn.primary{background:var(--info-bg);color:var(--info);border-color:transparent;}
+  .btn{padding:10px 14px;font-size:14px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center;transition:transform .12s ease,box-shadow .15s ease,background .15s ease;}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:var(--info);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(46,125,106,.22);}
   .btn.ok{background:var(--success-bg);color:var(--success);border-color:transparent;}
   .btn.no{background:var(--danger-bg);color:var(--danger);border-color:transparent;}
   .btn.block{width:100%;}
@@ -52,7 +68,7 @@
   .bar{height:9px;background:var(--surface3);border-radius:6px;overflow:hidden;display:flex;}
   .bar.big{height:13px;}
   .muted{font-size:12px;color:var(--text3);}
-  .sec-title{font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
+  .sec-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:20px 0 9px;display:flex;align-items:center;gap:7px;}
   .seg{display:inline-flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;}
   .seg button{border:none;padding:7px 13px;font-size:13px;background:transparent;color:var(--text);}
   .seg button.on{background:var(--info-bg);color:var(--info);font-weight:600;}
@@ -74,20 +90,35 @@
   .colorbtn.on{outline:2px solid var(--info);outline-offset:2px;}
   .floatp{position:absolute;font-size:13px;font-weight:700;color:var(--success);pointer-events:none;animation:fp 1.4s ease-out forwards;z-index:5;}
   @keyframes fp{0%{opacity:0;transform:translateY(6px);}20%{opacity:1;}100%{opacity:0;transform:translateY(-20px);}}
-  .nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--surface);border-top:1px solid var(--border);display:flex;overflow-x:auto;padding:6px 4px;gap:2px;}
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--surface);border-top:1px solid var(--border);display:flex;overflow-x:auto;padding:8px 6px;gap:2px;box-shadow:0 -2px 16px rgba(40,55,48,.06);}
   .nav::-webkit-scrollbar{display:none;}
-  .nav button{flex:0 0 auto;border:none;background:transparent;color:var(--text3);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:8px;min-width:56px;}
+  .nav button{flex:0 0 auto;border:none;background:transparent;color:var(--text3);font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 11px;border-radius:12px;min-width:58px;transition:background .15s ease,color .15s ease;}
   .nav button .ni{font-size:20px;line-height:1;}
+  .nav button .ni svg{width:23px;height:23px;display:block;}
+  .menu button .ni svg{width:19px;height:19px;display:block;}
   .nav button.on{color:var(--info);background:var(--info-bg);}
   .empty{text-align:center;color:var(--text3);font-size:14px;padding:18px 8px;}
   .setup{max-width:520px;margin:0 auto;padding:24px 18px;}
   .setup h1{font-size:24px;margin:0 0 6px;}
   .setup .step{font-size:13px;color:var(--success);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:18px;}
+  /* ===== TEMA OSCURO ===== */
+  /* Manual: el usuario lo eligió en Mascota > Temas */
+  html[data-theme="dark"]{--bg:#181c1a;--surface:#212623;--surface2:#272d29;--surface3:#323833;
+    --text:#eef1ec;--text2:#aeb5ad;--text3:#828a83;--border:#2e3431;--border2:#414740;
+    --info-bg:#113b32;--info:#8fd3bf;--success-bg:#123d27;--success:#9fe0b3;
+    --warning-bg:#3f2e10;--warning:#f0cd8b;--danger-bg:#3f211c;--danger:#f0b3a6;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);--shadow-soft:0 1px 3px rgba(0,0,0,.3);}
+  html[data-theme="dark"] .topbar{background:rgba(24,28,26,.82);}
+  html[data-theme="dark"] .nav{box-shadow:0 -2px 16px rgba(0,0,0,.3);}
+  /* Automático: sigue al sistema, salvo que el usuario haya forzado claro u oscuro */
   @media (prefers-color-scheme:dark){
-    :root{--bg:#1c1b19;--surface:#262521;--surface2:#2f2e2a;--surface3:#3a3833;
-      --text:#f1efe8;--text2:#b4b2a9;--text3:#888780;--border:#3a3833;--border2:#48463f;
-      --info-bg:#0c447c;--info:#b5d4f4;--success-bg:#085041;--success:#9fe1cb;
-      --warning-bg:#633806;--warning:#fac775;--danger-bg:#791f1f;--danger:#f7c1c1;}
+    html:not([data-theme="light"]):not([data-theme="dark"]){--bg:#181c1a;--surface:#212623;--surface2:#272d29;--surface3:#323833;
+      --text:#eef1ec;--text2:#aeb5ad;--text3:#828a83;--border:#2e3431;--border2:#414740;
+      --info-bg:#113b32;--info:#8fd3bf;--success-bg:#123d27;--success:#9fe0b3;
+      --warning-bg:#3f2e10;--warning:#f0cd8b;--danger-bg:#3f211c;--danger:#f0b3a6;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);--shadow-soft:0 1px 3px rgba(0,0,0,.3);}
+    html:not([data-theme="light"]):not([data-theme="dark"]) .topbar{background:rgba(24,28,26,.82);}
+    html:not([data-theme="light"]):not([data-theme="dark"]) .nav{box-shadow:0 -2px 16px rgba(0,0,0,.3);}
   }
 </style>
 </head>
@@ -95,16 +126,17 @@
 <div id="root"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
   "use strict";
 
-  // ====== CONFIG DE CONEXIÓN (se guarda en este teléfono) ======
-  var CFG_KEY="nh_config_v1";
-  function getCfg(){ try{ return JSON.parse(localStorage.getItem(CFG_KEY))||null; }catch(e){ return null; } }
-  function setCfg(c){ localStorage.setItem(CFG_KEY,JSON.stringify(c)); }
-  function clearCfg(){ localStorage.removeItem(CFG_KEY); }
+  // ====== BACKEND COMPARTIDO (fijo en la app) ======
+  var SUPABASE_URL="https://epylduwqmwueptshmizh.supabase.co";
+  var SUPABASE_KEY="sb_publishable_JI5BvfoELGln47iUODs3eQ_NIPGwE1a";
+  var FAM_KEY="nh_familia_v1"; // recuerda la última familia elegida en este equipo
+  function getFamSel(){ try{ return localStorage.getItem(FAM_KEY)||null; }catch(e){ return null; } }
+  function setFamSel(id){ try{ localStorage.setItem(FAM_KEY,id); }catch(e){} }
+  function clearFamSel(){ try{ localStorage.removeItem(FAM_KEY); }catch(e){} }
 
   var PALETTE=["info","success","warning","danger"];
   function PESO(n){return "$"+Math.round(n).toLocaleString("es-CL");}
@@ -118,70 +150,221 @@
   var PRECIOS={gorro:{cap:60,crown:200,party:120,bow:80},gafas:{round:70,sun:110},fondo:{ring:50,dots:90},mascota:{perro:300,conejo:300}};
   var COLORES=["#EF9F27","#888780","#85B7EB","#ED93B1","#97C459","#AFA9EC","#F0997B"];
   var TABS=[
-    {id:"integrantes",ic:"👥",t:"Familia"},{id:"cuentas",ic:"💵",t:"Cuentas"},{id:"aporte",ic:"⚖️",t:"Aporte"},
-    {id:"despensa",ic:"🛒",t:"Despensa"},{id:"metas",ic:"🎯",t:"Metas"},{id:"quehaceres",ic:"📅",t:"Tareas"},
+    {id:"integrantes",ic:"👥",t:"Familia"},{id:"gastos",ic:"💵",t:"Gastos"},{id:"aporte",ic:"⚖️",t:"Aporte"},
+    {id:"metas",ic:"🎯",t:"Metas"},{id:"quehaceres",ic:"📅",t:"Tareas"},
     {id:"mascota",ic:"🐾",t:"Mascota"},{id:"notas",ic:"📝",t:"Notas"},{id:"cierre",ic:"📊",t:"Cierre"},{id:"ajustes",ic:"⚙️",t:"Ajustes"}
   ];
+  var MENU_IDS={cierre:1,ajustes:1}; // estas van en el menú ⋯ de arriba, no en la barra inferior
 
-  var DEFAULT={usuarios:[],sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
+  var DEFAULT={adminId:null,usuarios:[],duenos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
   var state=JSON.parse(JSON.stringify(DEFAULT));
-  var currentUser=null, activeTab="integrantes";
+  var currentUser=null, activeTab="integrantes", subGastos="cuentas";
   var sb=null, hogar=null, conectado=false, guardando=false, ultimoGuardado="";
+  var sesion=null, familias=[], familiaActual=null;
   var root=document.getElementById("root");
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
   function esc(s){ return String(s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];}); }
+  // ===== TEMA (Automático / Claro / Oscuro) — preferencia por dispositivo =====
+  var TEMA_KEY="nh_tema_v1";
+  function getTema(){ try{ return localStorage.getItem(TEMA_KEY)||"auto"; }catch(e){ return "auto"; } }
+  function setTema(t){ try{ localStorage.setItem(TEMA_KEY,t); }catch(e){} aplicarTema(); }
+  function aplicarTema(){ var el=document.documentElement, t=getTema(); if(t==="auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme",t); }
+  function temaResuelto(){ var t=getTema(); if(t==="dark")return "dark"; if(t==="light")return "light"; return (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"; }
+
+  // Iconos SVG de línea para la navegación (heredan el color con currentColor)
+  var ICONOS={
+    integrantes:'<circle cx="9" cy="8" r="3.1"/><path d="M3.4 19c0-3.1 2.5-5.3 5.6-5.3 1.4 0 2.7.45 3.7 1.2"/><path d="M15.6 6.2a3 3 0 0 1 .2 5.9"/><path d="M16.4 13.9c2.4.45 4.2 2.4 4.2 5.1"/>',
+    gastos:'<rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="12" cy="12" r="2.6"/><path d="M5.6 9.4h.01"/><path d="M18.4 14.6h.01"/>',
+    aporte:'<path d="M12 4.5v15"/><path d="M8 20h8"/><path d="M4.5 7.2h15"/><path d="M9.2 6.4 12 5.2l2.8 1.2"/><path d="M4.5 7.2 2.3 12a2.2 2.2 0 0 0 4.4 0z"/><path d="M19.5 7.2 17.3 12a2.2 2.2 0 0 0 4.4 0z"/>',
+    metas:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/>',
+    quehaceres:'<rect x="4" y="5" width="16" height="15.2" rx="2.6"/><path d="M4 9.3h16"/><path d="M8 3.4v3.8"/><path d="M16 3.4v3.8"/><path d="M8.7 14.2 10.6 16l3.6-4.1"/>',
+    mascota:'<ellipse cx="7.4" cy="9.2" rx="1.7" ry="2.2"/><ellipse cx="12" cy="7.7" rx="1.8" ry="2.4"/><ellipse cx="16.6" cy="9.2" rx="1.7" ry="2.2"/><path d="M12 12.2c-2.6 0-4.6 2-4.6 4.3 0 1.8 1.6 2.7 4.6 2.7s4.6-.9 4.6-2.7c0-2.3-2-4.3-4.6-4.3z"/>',
+    notas:'<path d="M7 3.6h6.5l4.5 4.5V19a1.6 1.6 0 0 1-1.6 1.6H7A1.6 1.6 0 0 1 5.4 19V5.2A1.6 1.6 0 0 1 7 3.6z"/><path d="M13.2 3.6V8.4h4.8"/><path d="M8.6 12.6h6"/><path d="M8.6 15.8h4.2"/>',
+    cierre:'<path d="M4 20h16"/><rect x="5.4" y="11.5" width="3.3" height="6" rx="1"/><rect x="10.35" y="7.5" width="3.3" height="10" rx="1"/><rect x="15.3" y="14" width="3.3" height="3.5" rx="1"/>',
+    ajustes:'<path d="M3.5 7.5h9"/><path d="M16.5 7.5h4"/><circle cx="14.5" cy="7.5" r="2.1"/><path d="M3.5 16.5h3"/><path d="M10.5 16.5h10"/><circle cx="8.5" cy="16.5" r="2.1"/>'
+  };
+  function iconoTab(id){ if(!ICONOS[id]) return null; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONOS[id]+'</svg>'; }
+
+  // Logo real de pawnest (usa la versión clara u oscura según el tema resuelto)
+  function brandImg(w){ var src=temaResuelto()==="dark"?"logo-dark.png":"logo.png"; return '<span class="brandbox"><img src="'+src+'" alt="pawnest" style="width:'+w+'px;max-width:78vw;height:auto;display:block;"></span>'; }
   function adminUser(){ return state.usuarios[0]||null; }
-  function esAdmin(){ return currentUser&&currentUser===adminUser(); }
+  function esAdmin(){ return !!(sesion&&sesion.user&&state.adminId&&sesion.user.id===state.adminId); }
   function colorFor(u){ var i=state.usuarios.indexOf(u); return PALETTE[i%PALETTE.length]||"info"; }
   function pesoNivel(n){ return NIVELES[n||2].min; }
   function pts(u){ return state.puntos[u]||0; }
   function masc(u){ if(!state.mascota[u]) state.mascota[u]={tipo:"gato",color:COLORES[0],gorro:"none",gafas:"none",fondo:"plain",owned:[]}; return state.mascota[u]; }
   function darPuntos(u,n){ state.puntos[u]=(state.puntos[u]||0)+n; }
+  function fallbackCopiar(txt,ok,fail){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; ta.setAttribute("readonly","");
+      ta.style.position="fixed"; ta.style.top="0"; ta.style.left="0"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0,txt.length);
+      var done=document.execCommand("copy"); document.body.removeChild(ta);
+      if(done) ok(); else fail();
+    }catch(e){ fail(); }
+  }
+  function copiarTexto(txt,ok,fail){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok,function(){ fallbackCopiar(txt,ok,fail); });
+    } else { fallbackCopiar(txt,ok,fail); }
+  }
 
-  // ====== PANTALLA DE CONFIGURACIÓN ======
-  function renderSetup(msg){
+  // ====== PANTALLAS DE ESPERA / ERROR ======
+  function renderCargando(msg){
+    root.innerHTML='<div class="setup" style="text-align:center;padding-top:72px;">'+brandImg(170)+'<p class="muted" style="font-size:15px;margin-top:10px;">'+esc(msg||"Cargando…")+'</p></div>';
+  }
+  function renderFatal(msg){
+    root.innerHTML='<div class="setup" style="text-align:center;"><div style="margin-bottom:6px;">'+brandImg(180)+'</div>'+
+      '<div class="card" style="background:var(--danger-bg);color:var(--danger);border:none;">'+esc(msg||"Ocurrió un problema.")+'</div>'+
+      '<button class="btn primary block" id="fatalReload" style="margin-top:12px;">Reintentar</button></div>';
+    document.getElementById("fatalReload").onclick=function(){ iniciar(); };
+  }
+  function traducirAuthError(msg){
+    msg=msg||"";
+    if(/Invalid login credentials/i.test(msg)) return "Correo o contraseña incorrectos.";
+    if(/already registered/i.test(msg)) return "Ese correo ya tiene una cuenta. Inicia sesión.";
+    if(/rate limit|too many/i.test(msg)) return "Demasiados intentos. Espera un momento e inténtalo de nuevo.";
+    if(/Password should be/i.test(msg)) return "La contraseña debe tener al menos 6 caracteres.";
+    return msg;
+  }
+
+  // ====== PANTALLA DE LOGIN / REGISTRO ======
+  function renderAuth(modo){
+    modo=modo||"login"; var esLogin=modo==="login";
     root.innerHTML='<div class="setup">'+
-      '<h1>🏠 Nuestro Hogar</h1>'+
-      '<p class="muted" style="font-size:15px;">Conecta esta app a tu hogar compartido. Solo lo haces una vez en este teléfono. Si no tienes los datos aún, abre la guía que te entregaron.</p>'+
-      (msg?'<div class="card" style="background:var(--danger-bg);color:var(--danger);border:none;">'+esc(msg)+'</div>':'')+
-      '<div class="step">Paso 1 · Datos de tu Supabase</div>'+
-      '<div class="field" style="margin-top:8px;"><label class="lbl">Project URL (dirección)</label><input id="cfgUrl" placeholder="https://xxxxx.supabase.co"></div>'+
-      '<div class="field"><label class="lbl">API Key anon public (clave larga)</label><textarea id="cfgKey" rows="3" placeholder="eyJhbGciOi..."></textarea></div>'+
-      '<div class="step">Paso 2 · Tu hogar</div>'+
-      '<div class="field" style="margin-top:8px;"><label class="lbl">Código de hogar (invéntalo, y úsenlo los tres iguales)</label><input id="cfgHogar" placeholder="ej: casacoronel2026"></div>'+
-      '<button class="btn primary block" id="cfgGo" style="margin-top:14px;">Conectar mi hogar</button>'+
-      '<p class="muted" style="margin-top:14px;">El código de hogar es la “llave” que comparten los tres para ver lo mismo. Escríbanlo idéntico (sin mayúsculas ni espacios).</p>'+
+      '<div style="text-align:center;margin:8px 0 6px;">'+brandImg(230)+'</div>'+
+      '<p class="muted" style="font-size:15px;text-align:center;">'+(esLogin?"Inicia sesión para entrar a tu hogar compartido.":"Crea tu cuenta para empezar.")+'</p>'+
+      '<div id="authMsg"></div>'+
+      '<div class="field" style="margin-top:14px;"><label class="lbl">Correo</label><input id="auEmail" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>'+
+      '<div class="field"><label class="lbl">Contraseña</label><input id="auPass" type="password" autocomplete="'+(esLogin?"current-password":"new-password")+'" placeholder="••••••••"></div>'+
+      '<button class="btn primary block" id="auGo" style="margin-top:8px;">'+(esLogin?"Entrar":"Crear cuenta")+'</button>'+
+      '<p class="muted" style="margin-top:16px;text-align:center;">'+(esLogin?"¿No tienes cuenta? ":"¿Ya tienes cuenta? ")+'<a href="#" id="auSwitch" style="color:var(--info);font-weight:600;">'+(esLogin?"Crear una":"Iniciar sesión")+'</a></p>'+
     '</div>';
-    document.getElementById("cfgGo").onclick=function(){
-      var url=document.getElementById("cfgUrl").value.trim();
-      var key=document.getElementById("cfgKey").value.trim();
-      var hg=document.getElementById("cfgHogar").value.trim().toLowerCase().replace(/[^a-z0-9]/g,"");
-      if(!url||!key||!hg){ renderSetup("Completa los tres campos."); return; }
-      if(url.indexOf("http")!==0){ renderSetup("La dirección debe empezar con https://"); return; }
-      setCfg({url:url,key:key,hogar:hg});
-      iniciar();
+    function setMsg(t,tipo){ var b=document.getElementById("authMsg"); b.innerHTML=t?'<div class="card" style="background:var(--'+(tipo||"danger")+'-bg);color:var(--'+(tipo||"danger")+');border:none;margin-top:12px;">'+esc(t)+'</div>':''; }
+    document.getElementById("auSwitch").onclick=function(e){ e.preventDefault(); renderAuth(esLogin?"registro":"login"); };
+    document.getElementById("auGo").onclick=function(){
+      var email=document.getElementById("auEmail").value.trim();
+      var pass=document.getElementById("auPass").value;
+      if(!email||!pass){ setMsg("Escribe tu correo y contraseña."); return; }
+      if(pass.length<6){ setMsg("La contraseña debe tener al menos 6 caracteres."); return; }
+      var btn=document.getElementById("auGo"); btn.disabled=true; btn.textContent="Un momento…";
+      var p=esLogin?sb.auth.signInWithPassword({email:email,password:pass}):sb.auth.signUp({email:email,password:pass});
+      p.then(function(res){
+        btn.disabled=false; btn.textContent=esLogin?"Entrar":"Crear cuenta";
+        if(res.error){ setMsg(traducirAuthError(res.error.message)); return; }
+        if(!res.data.session){ setMsg("Te enviamos un correo para confirmar tu cuenta. Confírmalo y vuelve a iniciar sesión.","info"); return; }
+        sesion=res.data.session; irAFamilia();
+      });
     };
+  }
+
+  // ====== ELEGIR / CREAR / UNIRSE A UN HOGAR ======
+  function renderFamilyChoice(){
+    var h='<div class="setup"><div style="text-align:center;margin:4px 0 10px;">'+brandImg(160)+'</div><h1 style="text-align:center;font-size:21px;">Tu hogar</h1>';
+    if(familias.length>0){
+      h+='<p class="muted" style="font-size:15px;">Elige el hogar al que quieres entrar:</p>';
+      familias.forEach(function(f){ h+='<button class="btn block" data-fam="'+esc(f.id)+'" style="margin-bottom:8px;justify-content:flex-start;">🏠 '+esc(f.name)+'</button>'; });
+      h+='<div class="step">o…</div>';
+    } else {
+      h+='<p class="muted" style="font-size:15px;">Aún no perteneces a ningún hogar. Crea uno nuevo o únete con un código de invitación.</p>';
+    }
+    h+='<div id="fcMsg"></div>'+
+      '<div class="step">Crear un hogar nuevo</div>'+
+      '<div class="field" style="margin-top:8px;"><label class="lbl">Nombre del hogar</label><input id="fcName" placeholder="Ej: Casa Coronel"></div>'+
+      '<button class="btn primary block" id="fcCreate">Crear hogar</button>'+
+      '<div class="step">Unirme con un código</div>'+
+      '<div class="field" style="margin-top:8px;"><label class="lbl">Código de invitación</label><input id="fcCode" placeholder="Ej: AB12CD"></div>'+
+      '<button class="btn block" id="fcJoin">Unirme</button>'+
+      '<button class="btn no block" id="fcLogout" style="margin-top:24px;">Cerrar sesión</button>'+
+    '</div>';
+    root.innerHTML=h;
+    function setMsg(t,tipo){ var b=document.getElementById("fcMsg"); b.innerHTML=t?'<div class="card" style="background:var(--'+(tipo||"danger")+'-bg);color:var(--'+(tipo||"danger")+');border:none;margin:12px 0;">'+esc(t)+'</div>':''; }
+    Array.prototype.forEach.call(root.querySelectorAll("[data-fam]"),function(b){ b.onclick=function(){ var id=b.getAttribute("data-fam"); familiaActual=familias.filter(function(f){return f.id===id;})[0]; hogar=id; setFamSel(id); arrancarApp(); }; });
+    document.getElementById("fcCreate").onclick=function(){
+      var name=document.getElementById("fcName").value.trim();
+      if(!name){ setMsg("Escribe un nombre para tu hogar."); return; }
+      var btn=document.getElementById("fcCreate"); btn.disabled=true; btn.textContent="Creando…";
+      sb.rpc("create_family",{fam_name:name}).then(function(res){
+        btn.disabled=false; btn.textContent="Crear hogar";
+        if(res.error){ setMsg("No se pudo crear: "+res.error.message); return; }
+        if(res.data) setFamSel(res.data);
+        irAFamilia();
+      });
+    };
+    document.getElementById("fcJoin").onclick=function(){
+      var code=document.getElementById("fcCode").value.trim().toUpperCase();
+      if(!code){ setMsg("Escribe el código de invitación."); return; }
+      var btn=document.getElementById("fcJoin"); btn.disabled=true; btn.textContent="Uniéndote…";
+      sb.rpc("accept_invite",{invite_code:code}).then(function(res){
+        btn.disabled=false; btn.textContent="Unirme";
+        if(res.error){ setMsg("No se pudo unir: "+res.error.message); return; }
+        if(res.data) setFamSel(res.data);
+        irAFamilia();
+      });
+    };
+    document.getElementById("fcLogout").onclick=cerrarSesion;
   }
 
   // ====== CONEXIÓN SUPABASE ======
   function iniciar(){
-    var cfg=getCfg();
-    if(!cfg){ renderSetup(); return; }
-    if(typeof supabase==="undefined"){ renderSetup("No se pudo cargar la librería de conexión. Revisa tu internet y recarga."); return; }
-    hogar=cfg.hogar;
-    try{ sb=supabase.createClient(cfg.url,cfg.key); }
-    catch(e){ renderSetup("Los datos de conexión no son válidos. Revísalos."); return; }
-    arrancarApp();
+    if(typeof supabase==="undefined"){ renderFatal("No se pudo cargar la librería de conexión. Revisa tu internet y recarga."); return; }
+    if(!sb){
+      try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+      catch(e){ renderFatal("No se pudo iniciar la conexión."); return; }
+    }
+    renderCargando("Entrando…");
+    sb.auth.getSession().then(function(res){
+      sesion=(res.data&&res.data.session)?res.data.session:null;
+      if(!sesion){ renderAuth("login"); return; }
+      irAFamilia();
+    });
+  }
+
+  // ====== CARGAR HOGARES DEL USUARIO ======
+  function irAFamilia(){
+    renderCargando("Cargando tu hogar…");
+    var miId=(sesion&&sesion.user)?sesion.user.id:null;
+    sb.from("family_members").select("family_id,families(id,name)").eq("user_id",miId).then(function(res){
+      if(res.error){ renderFatal("No se pudieron cargar tus hogares: "+res.error.message); return; }
+      // solo MIS membresías, y sin repetir la misma casa
+      var vistos={}; familias=[];
+      (res.data||[]).forEach(function(r){ if(r.family_id && !vistos[r.family_id]){ vistos[r.family_id]=true; familias.push({id:r.family_id,name:(r.families&&r.families.name)||"Mi hogar"}); } });
+      if(familias.length===0){ renderFamilyChoice(); return; }
+      var prefer=getFamSel(); familiaActual=null;
+      if(prefer) familiaActual=familias.filter(function(f){return f.id===prefer;})[0]||null;
+      if(!familiaActual && familias.length===1) familiaActual=familias[0];
+      if(!familiaActual){ renderFamilyChoice(); return; }
+      hogar=familiaActual.id; setFamSel(hogar);
+      arrancarApp();
+    });
+  }
+
+  function cerrarSesion(){
+    clearFamSel();
+    var fin=function(){ sesion=null; familias=[]; familiaActual=null; hogar=null; conectado=false; renderAuth("login"); };
+    if(sb&&sb.auth) sb.auth.signOut().then(fin,fin); else fin();
+  }
+
+  // ====== GENERAR INVITACIÓN (código corto, vence en 7 días) ======
+  function generarInvitacion(cb){
+    var chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", code="";
+    for(var i=0;i<6;i++) code+=chars.charAt(Math.floor(Math.random()*chars.length));
+    var expira=new Date(Date.now()+7*24*60*60*1000).toISOString();
+    sb.from("invites").insert({family_id:hogar,code:code,created_by:sesion.user.id,expires_at:expira}).then(function(res){
+      if(res.error){ cb(null,res.error); return; }
+      cb(code,null);
+    });
   }
 
   function arrancarApp(){
     root.innerHTML=''+
-      '<div class="topbar"><div class="brand"><span class="ico">🏠</span><span>Nuestro Hogar</span></div>'+
-      '<div class="right"><span class="pts" id="ptsChip">✨ <span id="ptsVal">0</span></span><select class="user" id="userSel"></select></div></div>'+
+      '<div class="topbar"><div class="brand"><span style="font-size:20px;">🏠</span><span id="brandName">'+esc((familiaActual&&familiaActual.name)||"Mi hogar")+'</span></div>'+
+      '<div class="right"><span class="pts" id="ptsChip">✨ <span id="ptsVal">0</span></span><span class="user" id="userLbl"></span>'+
+      '<div class="menuwrap"><button class="menubtn" id="menuBtn" aria-label="Más opciones">⋯</button><div class="menu" id="menu"></div></div></div></div>'+
       '<div class="status" id="status"><span class="dot" id="connDot"></span><span id="statusTxt">Conectando…</span></div>'+
       '<div class="wrap"><div id="content"></div></div>'+
       '<nav class="nav" id="nav"></nav>';
+    if(!window.__nhMenuBound){ window.__nhMenuBound=true; document.addEventListener("click",function(e){ var w=document.querySelector(".menuwrap"); if(w && !w.contains(e.target)) cerrarMenu(); }); }
     cargarYsuscribir();
   }
 
@@ -194,24 +377,30 @@
     setStatus("Cargando datos del hogar…");
     sb.from("hogares").select("data").eq("id",hogar).single().then(function(res){
       if(res.error && res.error.code==="PGRST116"){
-        // no existe: lo creamos vacío
-        sb.from("hogares").insert({id:hogar,data:DEFAULT}).then(function(r2){
+        // no existe: lo creamos. Quien lo abre primero (el creador) queda como admin.
+        var inicial=JSON.parse(JSON.stringify(DEFAULT)); inicial.adminId=(sesion&&sesion.user)?sesion.user.id:null;
+        sb.from("hogares").insert({id:hogar,data:inicial}).then(function(r2){
           if(r2.error){ conError(r2.error); return; }
-          state=JSON.parse(JSON.stringify(DEFAULT)); conectado=true; setStatus("Conectado · hogar nuevo","on"); render(); suscribir();
+          state=inicial; conectado=true; setStatus("Conectado · hogar nuevo","on"); render(); suscribir();
         });
       } else if(res.error){ conError(res.error); }
-      else { state=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),res.data.data||{}); conectado=true; setStatus("Conectado","on"); render(); suscribir(); }
+      else {
+        state=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),res.data.data||{}); conectado=true; setStatus("Conectado","on");
+        // respaldo: si el hogar aún no tiene admin asignado, lo toma quien lo abre ahora
+        if(!state.adminId && sesion && sesion.user){ state.adminId=sesion.user.id; save(); }
+        render(); suscribir();
+      }
     });
   }
   function conError(err){
     var msg=(err&&err.message)?err.message:"Error de conexión";
     if(msg.indexOf("relation")>=0 || msg.indexOf("does not exist")>=0) msg="Falta crear la tabla en Supabase. Revisa el paso de la guía sobre la tabla 'hogares'.";
-    if(msg.indexOf("JWT")>=0 || msg.indexOf("apikey")>=0 || msg.indexOf("Invalid")>=0) msg="La clave o la dirección no son correctas. Revísalas en Ajustes.";
+    if(msg.indexOf("JWT")>=0 || msg.indexOf("apikey")>=0 || msg.indexOf("Invalid")>=0) msg="Tu sesión pudo expirar. Cierra sesión y vuelve a entrar.";
     setStatus("Sin conexión","off");
     var c=document.getElementById("content");
-    if(c) c.innerHTML='<div class="card" style="background:var(--danger-bg);color:var(--danger);border:none;"><b>No se pudo conectar.</b><br>'+esc(msg)+'</div><button class="btn block" id="reintentar" style="margin-top:8px;">Reintentar</button><button class="btn block" id="reconfig" style="margin-top:8px;">Cambiar datos de conexión</button>';
+    if(c) c.innerHTML='<div class="card" style="background:var(--danger-bg);color:var(--danger);border:none;"><b>No se pudo conectar.</b><br>'+esc(msg)+'</div><button class="btn block" id="reintentar" style="margin-top:8px;">Reintentar</button><button class="btn no block" id="reconfig" style="margin-top:8px;">Cerrar sesión</button>';
     var r=document.getElementById("reintentar"); if(r)r.onclick=cargarYsuscribir;
-    var rc=document.getElementById("reconfig"); if(rc)rc.onclick=function(){ clearCfg(); renderSetup(); };
+    var rc=document.getElementById("reconfig"); if(rc)rc.onclick=cerrarSesion;
   }
 
   var saveTimer=null;
@@ -240,20 +429,34 @@
   }
 
   var content, sel;
-  function getEls(){ content=document.getElementById("content"); sel=document.getElementById("userSel"); }
+  function getEls(){ content=document.getElementById("content"); }
 
+  // El integrante que pertenece a la cuenta con sesión iniciada (el nombre que creó esa cuenta)
+  function miIntegrante(){
+    var miId=(sesion&&sesion.user)?sesion.user.id:null; if(!miId) return null;
+    state.duenos=state.duenos||{};
+    for(var i=0;i<state.usuarios.length;i++){ if(state.duenos[state.usuarios[i]]===miId) return state.usuarios[i]; }
+    return null;
+  }
   function fillUserSel(){
-    sel.innerHTML="";
-    if(state.usuarios.length===0){ var o=document.createElement("option"); o.textContent="(sin familia)"; o.value=""; sel.appendChild(o); currentUser=null; return; }
-    state.usuarios.forEach(function(u){ var op=document.createElement("option"); op.value=u; op.textContent=u+(u===adminUser()?" (admin)":""); sel.appendChild(op); });
-    if(!currentUser||state.usuarios.indexOf(currentUser)<0) currentUser=state.usuarios[0];
-    sel.value=currentUser;
+    currentUser=miIntegrante();
+    var lbl=document.getElementById("userLbl");
+    if(lbl) lbl.textContent=currentUser?(currentUser+(currentUser===adminUser()?" 🛡️":"")):"Crea tu nombre";
   }
   function updatePts(){ var chip=document.getElementById("ptsChip"); if(currentUser){ chip.style.display="inline-flex"; document.getElementById("ptsVal").textContent=pts(currentUser); } else chip.style.display="none"; }
+  function irATab(id){ activeTab=id; cerrarMenu(); render(); var w=document.querySelector(".wrap"); if(w)w.scrollIntoView({block:"start"}); }
   function buildNav(){
     var nav=document.getElementById("nav"); nav.innerHTML="";
-    TABS.forEach(function(tab){ var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+tab.ic+'</span>'+tab.t;
-      b.onclick=function(){ activeTab=tab.id; render(); var w=document.querySelector(".wrap"); if(w)w.scrollIntoView({block:"start"}); }; nav.appendChild(b); });
+    TABS.forEach(function(tab){ if(MENU_IDS[tab.id]) return; var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+(iconoTab(tab.id)||tab.ic)+'</span>'+tab.t;
+      b.onclick=function(){ irATab(tab.id); }; nav.appendChild(b); });
+  }
+  function cerrarMenu(){ var m=document.getElementById("menu"),btn=document.getElementById("menuBtn"); if(m)m.classList.remove("open"); if(btn)btn.classList.remove("on"); }
+  function buildMenu(){
+    var m=document.getElementById("menu"),btn=document.getElementById("menuBtn"); if(!m||!btn) return;
+    m.innerHTML="";
+    TABS.forEach(function(tab){ if(!MENU_IDS[tab.id]) return; var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+(iconoTab(tab.id)||tab.ic)+'</span>'+tab.t;
+      b.onclick=function(){ irATab(tab.id); }; m.appendChild(b); });
+    btn.onclick=function(e){ e.stopPropagation(); var abierto=m.classList.toggle("open"); btn.classList.toggle("on",abierto); };
   }
 
   function calcularAportes(){
@@ -324,16 +527,19 @@
 
   function render(){
     getEls(); if(!content) return;
-    fillUserSel(); updatePts(); buildNav();
+    fillUserSel(); updatePts(); buildNav(); buildMenu();
     if(activeTab==="ajustes") return renderAjustes();
     if(activeTab==="integrantes") return renderIntegrantes();
     if(state.usuarios.length===0){
       content.innerHTML='<div class="card soft" style="text-align:center;padding:24px 12px;"><div style="font-size:30px;">👋</div><p style="margin:8px 0 4px;font-weight:600;">Primero agrega a tu familia</p><p class="muted" style="margin:0 0 12px;">El primer integrante será el admin. Cada uno tendrá su mascota y puntos.</p><button class="btn primary" id="goInt">Ir a Familia →</button></div>';
       document.getElementById("goInt").onclick=function(){ activeTab="integrantes"; render(); }; return;
     }
-    if(activeTab==="cuentas") return renderCuentas();
+    if(!currentUser){
+      content.innerHTML='<div class="card soft" style="text-align:center;padding:24px 12px;"><div style="font-size:30px;">✍️</div><p style="margin:8px 0 4px;font-weight:600;">Crea tu nombre primero</p><p class="muted" style="margin:0 0 12px;">Para usar esta sección, crea tu propio integrante en la pestaña Familia. Así se guardan tus puntos y tu mascota.</p><button class="btn primary" id="goInt2">Ir a Familia →</button></div>';
+      document.getElementById("goInt2").onclick=function(){ activeTab="integrantes"; render(); }; return;
+    }
+    if(activeTab==="gastos") return renderGastos();
     if(activeTab==="aporte") return renderAporte();
-    if(activeTab==="despensa") return renderDespensa();
     if(activeTab==="metas") return renderMetas();
     if(activeTab==="quehaceres") return renderQuehaceres();
     if(activeTab==="mascota") return renderMascota();
@@ -342,44 +548,105 @@
   }
 
   function renderAjustes(){
-    var cfg=getCfg()||{};
-    content.innerHTML='<div class="sec-title">⚙️ Ajustes y conexión</div>'+
-      '<div class="card"><div class="muted">Hogar conectado</div><div style="font-weight:600;font-size:17px;">'+esc(cfg.hogar||"—")+'</div></div>'+
-      '<div class="card"><div class="muted">Estado</div><div style="font-weight:600;color:var(--'+(conectado?"success":"danger")+');">'+(conectado?"Conectado ✓":"Sin conexión")+'</div>'+(ultimoGuardado?'<div class="muted" style="margin-top:4px;">Último guardado '+ultimoGuardado+'</div>':'')+'</div>'+
-      '<p class="muted" style="margin:14px 0 6px;">Para que tu pareja y tu amiga vean lo mismo, deben usar el mismo código de hogar y los mismos datos de Supabase en sus teléfonos.</p>'+
-      '<button class="btn block" id="recargar" style="margin-bottom:8px;">Recargar datos del hogar</button>'+
-      '<button class="btn no block" id="cambiar">Cambiar datos de conexión</button>'+
-      '<div class="card soft" style="margin-top:16px;"><div class="muted">Tus datos de conexión (para copiar al teléfono de otro)</div>'+
-      '<div style="font-size:12px;word-break:break-all;margin-top:6px;"><b>URL:</b> '+esc(cfg.url||"—")+'</div>'+
-      '<div style="font-size:12px;word-break:break-all;margin-top:6px;"><b>Código hogar:</b> '+esc(cfg.hogar||"—")+'</div></div>';
+    var email=(sesion&&sesion.user&&sesion.user.email)||"—";
+    var nombreHogar=(familiaActual&&familiaActual.name)||"—";
+    var h='<div class="sec-title">⚙️ Ajustes</div>'+
+      '<div class="card"><div class="muted">Tu cuenta</div><div style="font-weight:600;font-size:16px;word-break:break-all;">'+esc(email)+'</div></div>'+
+      '<div class="card"><div class="muted">Hogar actual</div><div style="font-weight:600;font-size:17px;">'+esc(nombreHogar)+'</div><div style="font-weight:600;color:var(--'+(conectado?"success":"danger")+');margin-top:4px;">'+(conectado?"Conectado ✓":"Sin conexión")+'</div>'+(ultimoGuardado?'<div class="muted" style="margin-top:4px;">Último guardado '+ultimoGuardado+'</div>':'')+'</div>';
+    if(familias.length>1){
+      h+='<div class="card soft"><div style="font-weight:600;margin-bottom:8px;">Tus hogares</div><p class="muted" style="margin:0 0 8px;">Toca uno para entrar, o usa <b>Salir</b> para quitarlo de tu lista (si nadie más queda en esa casa, se borra con sus datos).</p>';
+      familias.forEach(function(f){ var act=familiaActual&&f.id===familiaActual.id;
+        h+='<div class="row" style="margin-bottom:6px;"><button class="btn grow" data-fam="'+esc(f.id)+'" style="justify-content:flex-start;">'+(act?"✓ ":"🏠 ")+esc(f.name)+'</button><button class="btn no" data-leave="'+esc(f.id)+'">Salir</button></div>'; });
+      h+='</div>';
+    }
+    h+='<div class="sec-title">👋 Invitar a tu hogar</div>'+
+      '<div class="card"><p class="muted" style="margin:0 0 8px;">Genera un código y compártelo. Quien lo use entrará a este hogar. Vence en 7 días.</p>'+
+      '<button class="btn primary block" id="genInv">Generar código de invitación</button>'+
+      '<div id="invBox"></div></div>';
+    h+='<button class="btn block" id="recargar" style="margin-top:16px;margin-bottom:8px;">Recargar datos del hogar</button>'+
+      '<button class="btn no block" id="salirHogar" style="margin-bottom:8px;">🚪 Salir de esta casa</button>'+
+      '<button class="btn no block" id="logout">Cerrar sesión</button>';
+    h+='<div style="text-align:center;margin:26px 0 6px;">'+brandImg(120)+'<div class="muted" style="font-size:11px;margin-top:4px;">Hecho con 💚 para tu hogar · v1.0</div></div>';
+    content.innerHTML=h;
+    document.getElementById("salirHogar").onclick=function(){
+      var soyAdmin=esAdmin();
+      var aviso="¿Salir de \""+(familiaActual&&familiaActual.name||"esta casa")+"\"?\n\nDejarás de ver sus datos."+(soyAdmin?"\n\n⚠️ Eres el admin: si te sales, la casa quedará sin admin.":"")+"\n\nSi eres la última persona, la casa y todos sus datos se borrarán y no se pueden recuperar.";
+      if(!confirm(aviso)) return;
+      var b=document.getElementById("salirHogar"); b.disabled=true; b.textContent="Saliendo…";
+      sb.rpc("leave_family",{fam_id:hogar}).then(function(res){
+        if(res.error){ b.disabled=false; b.textContent="🚪 Salir de esta casa"; alert("No se pudo salir: "+res.error.message); return; }
+        clearFamSel(); familiaActual=null; hogar=null; activeTab="integrantes"; irAFamilia();
+      });
+    };
+    Array.prototype.forEach.call(content.querySelectorAll("[data-fam]"),function(b){ b.onclick=function(){ var id=b.getAttribute("data-fam"); if(familiaActual&&id===familiaActual.id) return; familiaActual=familias.filter(function(f){return f.id===id;})[0]; hogar=id; setFamSel(id); activeTab="integrantes"; arrancarApp(); }; });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-leave]"),function(b){ b.onclick=function(){
+      var id=b.getAttribute("data-leave"); var f=familias.filter(function(x){return x.id===id;})[0]; var nm=f?f.name:"esta casa";
+      if(!confirm("¿Salir de \""+nm+"\"? Si nadie más queda en ella, se borrará junto con sus datos.")) return;
+      b.disabled=true; b.textContent="Saliendo…";
+      sb.rpc("leave_family",{fam_id:id}).then(function(res){
+        if(res.error){ b.disabled=false; b.textContent="Salir"; alert("No se pudo salir: "+res.error.message); return; }
+        if(getFamSel()===id) clearFamSel();
+        irAFamilia();
+      });
+    }; });
     document.getElementById("recargar").onclick=cargarYsuscribir;
-    document.getElementById("cambiar").onclick=function(){ if(confirm("¿Cambiar los datos de conexión? La app te pedirá configurarla de nuevo.")){ clearCfg(); renderSetup(); } };
+    document.getElementById("logout").onclick=function(){ if(confirm("¿Cerrar sesión en este teléfono?")) cerrarSesion(); };
+    document.getElementById("genInv").onclick=function(){
+      var btn=document.getElementById("genInv"); btn.disabled=true; btn.textContent="Generando…";
+      generarInvitacion(function(code,err){
+        btn.disabled=false; btn.textContent="Generar código de invitación";
+        var box=document.getElementById("invBox");
+        if(err){ box.innerHTML='<div class="card" style="background:var(--danger-bg);color:var(--danger);border:none;margin-top:10px;">No se pudo generar: '+esc(err.message)+'</div>'; return; }
+        box.innerHTML='<div class="card soft" style="margin-top:10px;text-align:center;"><div class="muted">Código (válido 7 días)</div><div style="font-size:28px;font-weight:700;letter-spacing:3px;margin:6px 0;" id="invCode">'+esc(code)+'</div><button class="btn primary" id="copyInv">📋 Copiar</button><div class="muted" id="copyHint" style="margin-top:6px;"></div></div>';
+        document.getElementById("copyInv").onclick=function(){
+          var b=document.getElementById("copyInv"), hint=document.getElementById("copyHint");
+          copiarTexto(code,function(){ b.textContent="✓ Copiado"; hint.textContent=""; },function(){ b.textContent="📋 Copiar"; hint.textContent="No se pudo copiar solo. Mantén presionado el código de arriba para copiarlo."; });
+        };
+      });
+    };
   }
 
   function renderIntegrantes(){
-    var h='<div class="card soft"><label class="lbl">Agregar integrante</label><div class="row"><input id="uN" placeholder="Nombre…" class="grow"><button class="btn primary" id="uAdd">Añadir</button></div><p class="muted" style="margin:6px 0 0;">El primero es el <b>admin</b> (valida aportes al ahorro).</p></div>';
+    var admin=esAdmin(), miId=(sesion&&sesion.user)?sesion.user.id:null;
+    state.duenos=state.duenos||{};
+    function puedeBorrar(nm){ return admin||(!!miId&&state.duenos[nm]===miId); }
+    var h='<div class="card soft"><label class="lbl">Agregar integrante</label><div class="row"><input id="uN" placeholder="Tu nombre…" class="grow"><button class="btn primary" id="uAdd">Añadir</button></div><p class="muted" style="margin:6px 0 0;">Crea tu nombre para registrar tus puntos, tareas y mascota.'+(admin?' Como admin, puedes eliminar a cualquier integrante.':' Puedes eliminar el tuyo cuando quieras.')+'</p></div>';
     if(state.usuarios.length===0) h+='<p class="empty">Aún no hay nadie. Añade al primero.</p>';
     else { h+='<p class="muted" style="margin:14px 0 6px;">'+state.usuarios.length+' integrante(s)</p>';
-      state.usuarios.forEach(function(u){ var m=masc(u),admin=u===adminUser();
-        h+='<div class="card"><div class="row"><div>'+svgMascota(m,"ok",42)+'</div><div class="grow" style="font-weight:600;">'+esc(u)+' <span style="font-size:12px;color:var(--warning);font-weight:600;">· '+pts(u)+' pts</span></div>'+(admin?'<span class="pill" style="background:var(--info-bg);color:var(--info);">🛡️ Admin</span>':'')+'<button class="del" data-del="'+esc(u)+'">🗑️</button></div></div>'; });
+      state.usuarios.forEach(function(u){ var m=masc(u),esAdminN=u===adminUser();
+        h+='<div class="card"><div class="row"><div>'+svgMascota(m,"ok",42)+'</div><div class="grow" style="font-weight:600;">'+esc(u)+' <span style="font-size:12px;color:var(--warning);font-weight:600;">· '+pts(u)+' pts</span></div>'+(esAdminN?'<span class="pill" style="background:var(--info-bg);color:var(--info);">🛡️ Admin</span>':'')+(puedeBorrar(u)?'<button class="del" data-del="'+esc(u)+'">🗑️</button>':'')+'</div></div>'; });
     }
     content.innerHTML=h;
-    function add(){ var n=document.getElementById("uN").value.trim(); if(!n||state.usuarios.indexOf(n)>=0)return; state.usuarios.push(n); masc(n); if(!currentUser)currentUser=n; save(); render(); }
+    var add=function(){ var n=document.getElementById("uN").value.trim(); if(!n||state.usuarios.indexOf(n)>=0)return; state.usuarios.push(n); masc(n); if(miId)state.duenos[n]=miId; if(!currentUser)currentUser=n; save(); render(); };
     document.getElementById("uAdd").onclick=add;
     document.getElementById("uN").addEventListener("keydown",function(e){ if(e.key==="Enter")add(); });
-    Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ var nm=b.getAttribute("data-del"); state.usuarios=state.usuarios.filter(function(x){return x!==nm;}); delete state.sueldos[nm];delete state.minimos[nm];delete state.puntos[nm];delete state.mascota[nm]; if(currentUser===nm)currentUser=state.usuarios[0]||null; save(); render(); }; });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ var nm=b.getAttribute("data-del"); if(!puedeBorrar(nm))return; if(!confirm("¿Eliminar a "+nm+"? Se borran sus puntos y su mascota.")) return; state.usuarios=state.usuarios.filter(function(x){return x!==nm;}); delete state.sueldos[nm];delete state.minimos[nm];delete state.puntos[nm];delete state.mascota[nm];delete state.duenos[nm]; if(currentUser===nm)currentUser=state.usuarios[0]||null; save(); render(); }; });
+  }
+
+  function renderGastos(){
+    // muestra el sub-apartado elegido y le antepone el interruptor Cuentas / Despensa
+    if(subGastos==="despensa") renderDespensa(); else renderCuentas();
+    var seg='<div class="seg" style="display:flex;width:100%;margin-bottom:12px;">'+
+      '<button id="sgCuentas" class="'+(subGastos==="cuentas"?"on":"")+'" style="flex:1;">💵 Cuentas</button>'+
+      '<button id="sgDespensa" class="'+(subGastos==="despensa"?"on":"")+'" style="flex:1;">🛒 Despensa</button></div>';
+    content.insertAdjacentHTML("afterbegin",seg);
+    document.getElementById("sgCuentas").onclick=function(){ subGastos="cuentas"; render(); };
+    document.getElementById("sgDespensa").onclick=function(){ subGastos="despensa"; render(); };
   }
 
   function renderCuentas(){
+    var admin=esAdmin();
     var items=state.cuentas, total=items.reduce(function(s,i){return s+(+i.monto||0);},0);
     var pagados=items.filter(function(i){return i.pagado;}).reduce(function(s,i){return s+(+i.monto||0);},0);
     var h='<div class="metrics"><div class="metric"><div class="l">Total mensual</div><div class="v">'+PESO(total)+'</div></div><div class="metric"><div class="l">Pagado</div><div class="v" style="color:var(--success);">'+PESO(pagados)+'</div></div><div class="metric"><div class="l">Pendiente</div><div class="v" style="color:var(--danger);">'+PESO(total-pagados)+'</div></div><div class="metric"><div class="l">Reparto justo</div><div class="v" style="font-size:14px;padding-top:5px;">Ver “Aporte”</div></div></div>';
-    h+='<div class="card soft"><div class="field"><label class="lbl">Concepto</label><input id="cN" placeholder="Agua, Luz, Internet…"></div><div class="field"><label class="lbl">Monto</label><input id="cM" type="number" inputmode="numeric" placeholder="0"></div><button class="btn primary block" id="cAdd">Agregar cuenta</button><p class="muted" style="margin:6px 0 0;">Marcar pagada da +8 puntos.</p></div>';
+    h+='<div class="card soft"><div class="field"><label class="lbl">Concepto</label><input id="cN" placeholder="Agua, Luz, Internet…"></div><div class="field"><label class="lbl">Monto</label><input id="cM" type="number" inputmode="numeric" placeholder="0"></div><button class="btn primary block" id="cAdd">Agregar cuenta</button><p class="muted" style="margin:6px 0 0;">Cualquiera puede agregar. '+(admin?'Marca como pagada y todos reciben +8 puntos.':'Solo el admin marca cuándo se pagó.')+'</p></div>';
     if(items.length===0) h+='<p class="empty">Sin cuentas. Agrega agua, luz, internet, dividendo…</p>';
-    else items.forEach(function(it){ h+='<div class="card"><div class="row"><input type="checkbox" data-pay="'+it.id+'" '+(it.pagado?"checked":"")+' style="width:20px;height:20px;flex:none;"><div class="grow"><div style="font-weight:600;'+(it.pagado?"text-decoration:line-through;color:var(--text3);":"")+'">'+esc(it.nombre)+'</div><div class="muted">Por '+esc(it.autor||"—")+'</div></div><div style="font-weight:600;">'+PESO(it.monto)+'</div><button class="del" data-del="'+it.id+'">🗑️</button></div></div>'; });
+    else items.forEach(function(it){ h+='<div class="card"><div class="row"><input type="checkbox" data-pay="'+it.id+'" '+(it.pagado?"checked":"")+' '+(admin?"":"disabled")+' style="width:20px;height:20px;flex:none;'+(admin?"":"opacity:.45;")+'"><div class="grow"><div style="font-weight:600;'+(it.pagado?"text-decoration:line-through;color:var(--text3);":"")+'">'+esc(it.nombre)+'</div><div class="muted">Por '+esc(it.autor||"—")+(it.pagado?' · pagada ✓':'')+'</div></div><div style="font-weight:600;">'+PESO(it.monto)+'</div><button class="del" data-del="'+it.id+'">🗑️</button></div></div>'; });
     content.innerHTML=h;
     document.getElementById("cAdd").onclick=function(){ var n=document.getElementById("cN").value.trim(),m=+document.getElementById("cM").value; if(!n||!m)return; state.cuentas.push({id:uid(),nombre:n,monto:m,pagado:false,autor:currentUser}); save(); render(); };
-    Array.prototype.forEach.call(content.querySelectorAll("[data-pay]"),function(c){ c.onchange=function(){ var it=state.cuentas.filter(function(x){return x.id===c.getAttribute("data-pay");})[0]; it.pagado=c.checked; if(c.checked){darPuntos(currentUser,8);updatePts();} save(); render(); }; });
+    if(admin){
+      Array.prototype.forEach.call(content.querySelectorAll("[data-pay]"),function(c){ c.onchange=function(){ var it=state.cuentas.filter(function(x){return x.id===c.getAttribute("data-pay");})[0]; if(!it)return; it.pagado=c.checked; var d=c.checked?8:-8; state.usuarios.forEach(function(u){ state.puntos[u]=Math.max(0,(state.puntos[u]||0)+d); }); updatePts(); save(); render(); }; });
+    }
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.cuentas=state.cuentas.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
   }
 
@@ -436,7 +703,8 @@
   }
 
   function renderQuehaceres(){
-    var tareas=state.tareas, p=planSemana(state.rotSemana);
+    var tareas=state.tareas, p=planSemana(state.rotSemana), admin=esAdmin();
+    state.asignadas=state.asignadas||[];
     var maxCarga=Math.max.apply(null,[1].concat(Object.keys(p.carga).map(function(k){return p.carga[k];})));
     var h='<div class="card soft"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><div class="muted">Plan semanal</div><div style="font-size:16px;font-weight:600;">📅 Semana '+(state.rotSemana+1)+'</div></div><div class="row" style="gap:6px;"><span class="muted">Tope:</span><select id="tope" class="smallinput">'+[2,3,4].map(function(v){return '<option value="'+v+'" '+(state.topePesada===v?"selected":"")+'>'+v+'</option>';}).join("")+'</select><button class="btn" id="rPrev">‹</button><button class="btn" id="rNext">›</button></div></div><p class="muted" style="margin:6px 0 0;">Marca ✓ al terminar: ganas puntos y la mascota se anima.</p></div>';
     if(p.avisoTope) h+='<div class="card" style="background:var(--warning-bg);color:var(--warning);border:none;font-size:13px;">⚠️ Más turnos pesados que el tope cubre. Se repartió lo más parejo posible.</div>';
@@ -451,6 +719,20 @@
       state.usuarios.forEach(function(u){ var c=colorFor(u),mins=p.carga[u],horas=mins>=60?(Math.round(mins/6)/10)+" h":mins+" min";
         h+='<div class="card" style="padding:8px 10px;"><div class="row" style="justify-content:space-between;margin-bottom:6px;"><span class="pill" style="background:var(--'+c+'-bg);color:var(--'+c+');">'+esc(u)+'</span><span class="muted">~'+horas+' · '+p.vecesPesada[u]+' pes.</span></div><div class="bar"><div style="width:'+Math.round((mins/maxCarga)*100)+'%;background:var(--'+c+');"></div></div></div>'; });
       h+='</div>'; }
+    // ---- Tareas asignadas (solo el admin asigna; el resto solo ve las suyas) ----
+    h+='<div class="sec-title">📌 Tareas asignadas</div>';
+    if(admin){
+      h+='<div class="card soft"><label class="lbl">Asignar una tarea a alguien</label>'+
+        '<div class="field"><input id="asN" placeholder="Ej: Ordenar tu cuarto, sacar la basura…"></div>'+
+        '<div class="row" style="gap:8px;margin-bottom:8px;">'+
+          '<select id="asPara" class="smallinput grow">'+state.usuarios.map(function(u){return '<option value="'+esc(u)+'">'+esc(u)+'</option>';}).join("")+'</select>'+
+          '<select id="asNivel" class="smallinput grow"><option value="1">Ligera (+5)</option><option value="2" selected>Media (+10)</option><option value="3">Pesada (+20)</option></select>'+
+        '</div><button class="btn primary block" id="asAdd">Asignar tarea</button></div>';
+    }
+    var asigVis=admin?state.asignadas:state.asignadas.filter(function(a){return a.para===currentUser;});
+    if(asigVis.length===0) h+='<p class="empty">'+(admin?'Aún no has asignado tareas.':'No tienes tareas asignadas.')+'</p>';
+    else asigVis.slice().reverse().forEach(function(a){ var nv=NIVELES[a.nivel||2],mia=(a.para===currentUser),puede=admin||mia;
+      h+='<div class="card"><div class="row"><button class="check '+(a.hecha?"done":"")+'" data-asig="'+a.id+'" '+(puede?'':'disabled style="opacity:.4;"')+'>'+(a.hecha?"✓":"")+'</button><div class="grow"><div style="font-weight:600;'+(a.hecha?'text-decoration:line-through;color:var(--text3);':'')+'">'+esc(a.nombre)+'</div><div class="muted">Para <b>'+esc(a.para)+'</b> · '+nv.nombre+' · +'+nv.pts+' pts'+(a.hecha?' · hecha ✓':'')+'</div></div>'+(admin?'<button class="del" data-delasig="'+a.id+'">🗑️</button>':'')+'</div></div>'; });
     h+='<div class="card soft" style="margin-top:12px;"><label class="lbl">Agregar quehacer</label><div class="field"><input id="qN" placeholder="Cocinar, trapear, patio, baño…"></div><div class="row" style="gap:8px;margin-bottom:8px;"><select id="qNivel" class="smallinput grow"><option value="1">Ligera</option><option value="2" selected>Media</option><option value="3">Pesada</option></select><select id="qFreq" class="smallinput grow"><option value="diario">Todos los días</option><option value="dias" selected>Días específicos</option></select></div><div id="qDias" class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:8px;">'+DIAS.map(function(d,i){return '<button type="button" class="daybtn" data-pd="'+i+'">'+d+'</button>';}).join("")+'</div><button class="btn primary block" id="qAdd">Agregar</button></div>';
     if(tareas.length>0){ h+='<p class="muted" style="margin:14px 0 6px;">Tus quehaceres ('+tareas.length+')</p>';
       tareas.forEach(function(t){ var nv=NIVELES[t.nivel||2],ft=t.freq==="diario"?"Todos los días":(t.dias&&t.dias.length?t.dias.map(function(d){return DIAS[d];}).join(", "):"sin días");
@@ -465,14 +747,27 @@
     document.getElementById("qAdd").onclick=function(){ var n=document.getElementById("qN").value.trim(),nivel=+document.getElementById("qNivel").value,freq=freqSel.value; if(!n)return; var dias=freq==="diario"?[0,1,2,3,4,5,6]:Object.keys(picked).map(Number).sort(); if(freq==="dias"&&dias.length===0){setStatus("Elige al menos un día");return;} state.tareas.push({id:uid(),nombre:n,nivel:nivel,freq:freq,dias:dias}); save(); render(); };
     Array.prototype.forEach.call(content.querySelectorAll("[data-lvl]"),function(s){ s.onchange=function(){ var t=state.tareas.filter(function(x){return x.id===s.getAttribute("data-lvl");})[0]; if(t)t.nivel=+s.value; save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.tareas=state.tareas.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
+    if(admin){
+      var asAdd=document.getElementById("asAdd"); if(asAdd) asAdd.onclick=function(){ var n=document.getElementById("asN").value.trim(),para=document.getElementById("asPara").value,nivel=+document.getElementById("asNivel").value; if(!n||!para){ setStatus("Escribe la tarea y elige a quién"); return; } state.asignadas.push({id:uid(),nombre:n,para:para,nivel:nivel,hecha:false,por:currentUser,fecha:new Date().toLocaleDateString("es-CL")}); save(); render(); };
+      Array.prototype.forEach.call(content.querySelectorAll("[data-delasig]"),function(b){ b.onclick=function(){ state.asignadas=state.asignadas.filter(function(x){return x.id!==b.getAttribute("data-delasig");}); save(); render(); }; });
+    }
+    Array.prototype.forEach.call(content.querySelectorAll("[data-asig]"),function(b){ b.onclick=function(){ var a=state.asignadas.filter(function(x){return x.id===b.getAttribute("data-asig");})[0]; if(!a)return; if(!(admin||a.para===currentUser))return; var g=NIVELES[a.nivel||2].pts;
+      if(!a.hecha){ a.hecha=true; darPuntos(a.para,g); updatePts(); var f=document.createElement("div"); f.className="floatp"; f.textContent="+"+g; b.parentNode.style.position="relative"; b.parentNode.appendChild(f); setTimeout(function(){f.remove();},1400); save(); setTimeout(render,650); }
+      else { a.hecha=false; state.puntos[a.para]=Math.max(0,(state.puntos[a.para]||0)-g); save(); render(); } }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-check]"),function(b){ b.onclick=function(){ var parts=b.getAttribute("data-check").split("|"),key=parts[0],nivel=+parts[1],user=parts[2]; var cur=state.checks[key]&&state.checks[key].done;
       if(!cur){ state.checks[key]={user:user,done:true}; var g=NIVELES[nivel||2].pts; darPuntos(user,g); var chip=b.parentNode; var f=document.createElement("div"); f.className="floatp"; f.textContent="+"+g; chip.style.position="relative"; chip.appendChild(f); setTimeout(function(){f.remove();},1400); save(); updatePts(); setTimeout(render,650); }
       else { state.checks[key]={user:user,done:false}; var r=NIVELES[nivel||2].pts; state.puntos[user]=Math.max(0,(state.puntos[user]||0)-r); save(); render(); } }; });
   }
 
   function renderMascota(){
-    var m=masc(currentUser),animo=animoHogar(),saldo=pts(currentUser);
+    var m=masc(currentUser),animo=animoHogar(),saldo=pts(currentUser),tema=getTema();
     var h='<div class="card soft"><div class="row" style="align-items:center;flex-wrap:wrap;gap:14px;"><div>'+svgMascota(m,animo.cara,130)+'</div><div class="grow" style="min-width:150px;"><div style="font-size:17px;font-weight:600;">'+esc(MASCOTAS[m.tipo])+' de '+esc(currentUser)+'</div><div class="row" style="gap:8px;margin:6px 0;"><span class="pill" style="background:var(--'+animo.sem+'-bg);color:var(--'+animo.sem+');">'+animo.estado+'</span><span class="muted">'+animo.frase+'</span></div><div class="bar big" style="margin:8px 0;"><div style="width:'+animo.score+'%;background:var(--'+animo.sem+');"></div></div><p class="muted">El ánimo sube con tareas, cuentas pagadas y ahorro. Tienes <b style="color:var(--warning);">'+saldo+' puntos</b>.</p></div></div></div>';
+    h+='<div class="sec-title">🌗 Temas</div><div class="card soft"><p class="muted" style="margin:0 0 8px;">Elige el aspecto de la app. <b style="color:var(--success);">El modo oscuro es gratis</b> 🎉</p>'+
+      '<div class="seg" style="display:flex;width:100%;">'+
+        '<button id="tmAuto" class="'+(tema==="auto"?"on":"")+'" style="flex:1;">🔄 Auto</button>'+
+        '<button id="tmLight" class="'+(tema==="light"?"on":"")+'" style="flex:1;">☀️ Claro</button>'+
+        '<button id="tmDark" class="'+(tema==="dark"?"on":"")+'" style="flex:1;">🌙 Oscuro</button>'+
+      '</div><p class="muted" style="margin:8px 0 0;font-size:12px;">«Auto» sigue el modo de tu teléfono.</p></div>';
     h+='<div class="sec-title">🎨 Color (gratis)</div><div class="card soft"><div class="row" style="flex-wrap:wrap;gap:8px;">';
     COLORES.forEach(function(c){ h+='<button class="colorbtn '+(m.color===c?"on":"")+'" data-col="'+c+'" style="background:'+c+';"></button>'; });
     h+='</div></div><div class="sec-title">🎁 Tienda — accesorios</div><p class="muted" style="margin-bottom:8px;">Compra con puntos. Lo desbloqueado queda tuyo.</p>';
@@ -482,6 +777,9 @@
       h+='<div class="shop '+(owned?"owned":"")+'" data-masc="'+tipo+'"><div style="display:flex;justify-content:center;">'+svgMascota(demo,"ok",64)+'</div><div style="font-weight:600;font-size:13px;margin-top:4px;">'+esc(MASCOTAS[tipo])+'</div><div class="muted" style="color:var(--'+(act?"success":owned?"text2":"warning")+');">'+(act?"En uso":owned?"Tienes — usar":precio+" pts")+'</div></div>'; });
     h+='</div>';
     content.innerHTML=h;
+    var tmA=document.getElementById("tmAuto"); if(tmA)tmA.onclick=function(){ setTema("auto"); render(); };
+    var tmL=document.getElementById("tmLight"); if(tmL)tmL.onclick=function(){ setTema("light"); render(); };
+    var tmD=document.getElementById("tmDark"); if(tmD)tmD.onclick=function(){ setTema("dark"); render(); };
     Array.prototype.forEach.call(content.querySelectorAll("[data-col]"),function(b){ b.onclick=function(){ m.color=b.getAttribute("data-col"); save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-buy]"),function(b){ b.onclick=function(){ var parts=b.getAttribute("data-buy").split("|"),cat=parts[0],val=parts[1],key=cat+":"+val; var precio=val==="none"?0:((PRECIOS[cat]&&PRECIOS[cat][val]!==undefined)?PRECIOS[cat][val]:0); var owned=val==="none"||m.owned.indexOf(key)>=0;
       if(owned){ m[cat]=val; save(); render(); } else if(saldo>=precio){ state.puntos[currentUser]=saldo-precio; m.owned.push(key); m[cat]=val; save(); render(); } else setStatus("Te faltan "+(precio-saldo)+" puntos"); }; });
@@ -603,14 +901,11 @@
     h+='<p class="muted" style="margin:0 0 10px;">Mira el resumen completo en pantalla: cuentas, despensa, ahorro y saldo libre. Puedes copiarlo y pegarlo donde quieras (WhatsApp, notas, Excel).</p>';
     h+='<button class="btn primary block" id="verResumenBtn" style="margin-bottom:8px;">👁️ Ver resumen en pantalla</button>';
     h+='<button class="btn ok block" id="copiarBtn" style="margin-bottom:8px;">📋 Copiar resumen</button>';
-    h+='<button class="btn block" id="csvBtn" style="margin-bottom:8px;">⬇️ Descargar como CSV (Excel)</button>';
-    h+='<button class="btn block" id="exportBtn">⬇️ Descargar .xlsx</button>';
+    h+='<button class="btn block" id="csvBtn">⬇️ Descargar como CSV (Excel)</button>';
     h+='<div id="resumenBox" style="display:none;margin-top:10px;"></div>';
     h+='</div>';
 
     content.innerHTML=h;
-    var btn=document.getElementById("exportBtn");
-    if(btn) btn.onclick=exportarExcel;
     var vr=document.getElementById("verResumenBtn");
     if(vr) vr.onclick=verResumenPantalla;
     var cp=document.getElementById("copiarBtn");
@@ -717,156 +1012,7 @@
     }
   }
 
-  function cargarXLSX(cb){
-    if(typeof XLSX!=="undefined"){ cb(true); return; }
-    var fuentes=[
-      "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
-      "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js",
-      "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"
-    ];
-    var i=0;
-    function intentar(){
-      if(typeof XLSX!=="undefined"){ cb(true); return; }
-      if(i>=fuentes.length){ cb(false); return; }
-      var s=document.createElement("script");
-      s.src=fuentes[i++];
-      s.onload=function(){ cb(true); };
-      s.onerror=intentar;
-      document.head.appendChild(s);
-    }
-    intentar();
-  }
-
-  function exportarExcel(){
-    if(typeof XLSX==="undefined"){
-      setStatus("Cargando librería Excel…");
-      cargarXLSX(function(ok){
-        if(ok) exportarExcel();
-        else setStatus("No se pudo cargar la librería Excel. Revisa tu internet.","off");
-      });
-      return;
-    }
-    var calc=calcularAportes();
-    var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
-    var ahorroTotal=aprobados.reduce(function(s,a){return s+(+a.monto||0);},0);
-    var ahorroPP={}; state.usuarios.forEach(function(u){ahorroPP[u]=0;});
-    aprobados.forEach(function(a){ if(ahorroPP[a.autor]!==undefined) ahorroPP[a.autor]+=(+a.monto||0); });
-    var now=new Date();
-    var mesAnio=now.toLocaleDateString("es-CL",{month:"long",year:"numeric"});
-    var mesLabel=mesAnio.charAt(0).toUpperCase()+mesAnio.slice(1);
-
-    var wb=XLSX.utils.book_new();
-
-    // ---- HOJA 1: RESUMEN ----
-    var col1=["Categoría","Total ($)"].concat(state.usuarios.map(function(u){return "Aporte "+u+" ($)";}));
-    var filaCuentas=["Cuentas",Math.round(calc.cuentasTotal)].concat(state.usuarios.map(function(u){return Math.round((calc.res[u]||{}).aCuentas||0);}));
-    var filaDesp=["Despensa",Math.round(calc.despensaTotal)].concat(state.usuarios.map(function(u){return Math.round((calc.res[u]||{}).aDespensa||0);}));
-    var filaTotal=["TOTAL GASTOS",Math.round(calc.gasto)].concat(state.usuarios.map(function(u){return Math.round((calc.res[u]||{}).aporte||0);}));
-
-    var rd=[
-      ["RESUMEN MENSUAL — NUESTRO HOGAR"],
-      ["Mes: "+mesLabel],
-      [],
-      ["GASTOS DEL HOGAR"],
-      col1,
-      filaCuentas,
-      filaDesp,
-      filaTotal,
-      [],
-      ["FONDO DE AHORRO COMÚN"],
-      ["Persona","Monto ahorrado ($)"]
-    ];
-    state.usuarios.forEach(function(u){ rd.push([u, ahorroPP[u]||0]); });
-    rd.push(["TOTAL AHORRO", ahorroTotal]);
-    rd.push([]);
-    rd.push(["SALDO POR PERSONA"]);
-    rd.push(["Persona","Sueldo ($)","Aporte gastos ($)","Ahorro ($)","Libre ($)"]);
-    state.usuarios.forEach(function(u){
-      var r=calc.res[u]||{sueldo:0,aporte:0,queda:0};
-      rd.push([u, r.sueldo||0, Math.round(r.aporte||0), ahorroPP[u]||0, Math.round(r.queda||0)]);
-    });
-    rd.push([]);
-    rd.push(["DATOS PARA GRÁFICO"]);
-    rd.push(["Persona","Gastos ($)","Ahorro ($)"]);
-    state.usuarios.forEach(function(u){
-      rd.push([u, Math.round((calc.res[u]||{}).aporte||0), ahorroPP[u]||0]);
-    });
-
-    var ws1=XLSX.utils.aoa_to_sheet(rd);
-    ws1['!cols']=[{wch:24},{wch:16},{wch:16},{wch:16},{wch:16}];
-    XLSX.utils.book_append_sheet(wb,"Resumen",ws1);
-
-    // ---- HOJA 2: HISTORIAL AHORRO ----
-    var ad=[["HISTORIAL DE APORTES AL AHORRO"],["Fecha","Persona","Monto ($)","Folio / Comprobante","Estado"]];
-    state.ahorros.slice().reverse().forEach(function(a){
-      ad.push([a.fecha||"", a.autor||"", +a.monto||0, a.folio||"", a.estado==="aprobado"?"✓ Aprobado":"⏳ Pendiente"]);
-    });
-    ad.push([]); ad.push(["TOTAL APROBADO","",ahorroTotal]);
-    var ws2=XLSX.utils.aoa_to_sheet(ad);
-    ws2['!cols']=[{wch:14},{wch:14},{wch:14},{wch:24},{wch:14}];
-    XLSX.utils.book_append_sheet(wb,"Historial Ahorro",ws2);
-
-    // ---- HOJA 3: CUENTAS ----
-    var cd=[["CUENTAS DEL HOGAR"],["Concepto","Monto ($)","Estado","Registrada por"]];
-    state.cuentas.forEach(function(c){ cd.push([c.nombre||"",+c.monto||0,c.pagado?"Pagada":"Pendiente",c.autor||""]); });
-    cd.push(["TOTAL",state.cuentas.reduce(function(s,c){return s+(+c.monto||0);},0)]);
-    var ws3=XLSX.utils.aoa_to_sheet(cd);
-    ws3['!cols']=[{wch:24},{wch:14},{wch:12},{wch:16}];
-    XLSX.utils.book_append_sheet(wb,"Cuentas",ws3);
-
-    // ---- HOJA 4: DESPENSA ----
-    var dd=[["GASTOS DE DESPENSA"],["Fecha","Descripción","Monto ($)","Persona"]];
-    state.despensa.slice().reverse().forEach(function(d){ dd.push([d.fecha||"",d.nombre||"",+d.monto||0,d.autor||""]); });
-    dd.push(["TOTAL","",state.despensa.reduce(function(s,d){return s+(+d.monto||0);},0)]);
-    var ws4=XLSX.utils.aoa_to_sheet(dd);
-    ws4['!cols']=[{wch:14},{wch:26},{wch:14},{wch:14}];
-    XLSX.utils.book_append_sheet(wb,"Despensa",ws4);
-
-    var filename="NuestroHogar_"+mesAnio.replace(/\s+/g,"_")+".xlsx";
-    var MIME="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    var esIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-              (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
-    try {
-      var wbout=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-      var blob=new Blob([wbout],{type:MIME});
-      var url=URL.createObjectURL(blob);
-
-      if(esIOS){
-        // En iPhone/iPad (incluido Chrome, que usa Safari por debajo):
-        // abrir el archivo en una pestaña nueva. Desde ahí el usuario toca
-        // el botón Compartir del navegador y elige "Guardar en Archivos".
-        var win=window.open(url,"_blank");
-        if(!win){
-          // Si el navegador bloqueó la pestaña, ofrecer enlace directo
-          var aIOS=document.createElement("a");
-          aIOS.href=url; aIOS.target="_blank"; aIOS.rel="noopener";
-          document.body.appendChild(aIOS); aIOS.click();
-          document.body.removeChild(aIOS);
-        }
-        setStatus("Excel abierto en pestaña nueva → toca Compartir → Guardar en Archivos","on");
-        setTimeout(function(){ URL.revokeObjectURL(url); },60000);
-        return;
-      }
-
-      // Computador / Android: descarga directa
-      var a=document.createElement("a");
-      a.href=url; a.download=filename;
-      document.body.appendChild(a); a.click();
-      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },1500);
-      setStatus("Excel exportado ✓","on");
-    } catch(e) {
-      try {
-        var wbout2=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-        var blob2=new Blob([wbout2],{type:MIME});
-        var url2=URL.createObjectURL(blob2);
-        window.open(url2,"_blank");
-        setStatus("Excel abierto en otra pestaña — usa Compartir para guardarlo","on");
-      } catch(e2){
-        setStatus("No se pudo exportar. Recarga la página e intenta de nuevo.","off");
-      }
-    }
-  }
-
+  aplicarTema();
   iniciar();
 })();
 </script>
