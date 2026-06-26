@@ -15,6 +15,7 @@
     --text:#2a302c;--text2:#59615b;--text3:#8a918a;--border:#e7ebe3;--border2:#d4dacf;
     --info-bg:#e2efe9;--info:#2e7d6a;--success-bg:#e3f0e3;--success:#3c7d50;
     --warning-bg:#f6edda;--warning:#94661f;--danger-bg:#f6e6e2;--danger:#b05444;
+    --primary:#2e7d6a;
     --radius:12px;--radius-lg:16px;
     --shadow:0 1px 2px rgba(40,55,48,.04),0 4px 14px rgba(40,55,48,.05);
     --shadow-soft:0 1px 3px rgba(40,55,48,.05);
@@ -120,6 +121,69 @@
     html:not([data-theme="light"]):not([data-theme="dark"]) .topbar{background:rgba(24,28,26,.82);}
     html:not([data-theme="light"]):not([data-theme="dark"]) .nav{box-shadow:0 -2px 16px rgba(0,0,0,.3);}
   }
+  /* ===== PALETAS DE MARCA (recolorean el acento --info/--primary; verde es la base) ===== */
+  /* Claro */
+  html[data-palette="rosa"]{--primary:#c63f7e;--info:#c63f7e;--info-bg:#fbe4ef;}
+  html[data-palette="azul"]{--primary:#2f6db0;--info:#2f6db0;--info-bg:#e3edf9;}
+  html[data-palette="lila"]{--primary:#7a4fd0;--info:#7a4fd0;--info-bg:#ece3fb;}
+  html[data-palette="coral"]{--primary:#d4612f;--info:#d4612f;--info-bg:#fbe9df;}
+  /* Oscuro manual */
+  html[data-theme="dark"][data-palette="rosa"]{--primary:#f3a9cf;--info:#f3a9cf;--info-bg:#3d1f30;}
+  html[data-theme="dark"][data-palette="azul"]{--primary:#8fc0f0;--info:#8fc0f0;--info-bg:#15273b;}
+  html[data-theme="dark"][data-palette="lila"]{--primary:#c3a9f3;--info:#c3a9f3;--info-bg:#281d3d;}
+  html[data-theme="dark"][data-palette="coral"]{--primary:#f3b48f;--info:#f3b48f;--info-bg:#3d271b;}
+  /* Oscuro automático (sigue al sistema) */
+  @media (prefers-color-scheme:dark){
+    html:not([data-theme="light"]):not([data-theme="dark"])[data-palette="rosa"]{--primary:#f3a9cf;--info:#f3a9cf;--info-bg:#3d1f30;}
+    html:not([data-theme="light"]):not([data-theme="dark"])[data-palette="azul"]{--primary:#8fc0f0;--info:#8fc0f0;--info-bg:#15273b;}
+    html:not([data-theme="light"]):not([data-theme="dark"])[data-palette="lila"]{--primary:#c3a9f3;--info:#c3a9f3;--info-bg:#281d3d;}
+    html:not([data-theme="light"]):not([data-theme="dark"])[data-palette="coral"]{--primary:#f3b48f;--info:#f3b48f;--info-bg:#3d271b;}
+  }
+  /* ===== TEMAS DELUXE (Premium): color + decoración + botones mejorados ===== */
+  html[data-escena] #root{position:relative;z-index:1;}
+  #escenaDeco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  #escenaDeco .deco{position:absolute;}
+  /* --- Bosque (claro) --- */
+  html[data-escena="bosque"]{--info:#3c8a4e;--primary:#3c8a4e;--info-bg:#e2f0df;
+    --bg:#eef6e6;--surface:#fbfdf7;--surface2:#e9f2e0;--surface3:#dcebd0;--border:#deecd2;--border2:#c6ddb4;}
+  html[data-escena="bosque"] #escenaDeco{background:
+    radial-gradient(circle at 10% -2%,#d8edc7 0%,transparent 42%),
+    radial-gradient(circle at 92% 6%,#e7f4da 0%,transparent 40%),
+    linear-gradient(180deg,#eef6e6,#e3efd5);}
+  html[data-escena="bosque"] .deco.bosque .st{stroke:#4f9a4d;}
+  html[data-escena="bosque"] .deco.bosque .lf{fill:#6cb05f;}
+  html[data-escena="bosque"] .deco.bosque .lf2{fill:#5aa251;}
+  html[data-escena="bosque"] .deco.bosque .f circle{fill:#f4a9c8;}
+  html[data-escena="bosque"] .deco.bosque .f .fc{fill:#ffd66e;}
+  /* --- Bosque (oscuro manual) --- */
+  html[data-escena="bosque"][data-theme="dark"]{--info:#7fc98a;--primary:#7fc98a;--info-bg:#1d3320;
+    --bg:#10160e;--surface:#1a2116;--surface2:#202a1b;--surface3:#283422;--border:#2a3622;--border2:#3b4b31;}
+  html[data-escena="bosque"][data-theme="dark"] #escenaDeco{background:
+    radial-gradient(circle at 10% -2%,#1c2e18 0%,transparent 44%),
+    radial-gradient(circle at 92% 6%,#172611 0%,transparent 42%),
+    linear-gradient(180deg,#10160e,#0c120a);}
+  html[data-escena="bosque"][data-theme="dark"] .deco.bosque .st{stroke:#5fa85c;}
+  html[data-escena="bosque"][data-theme="dark"] .deco.bosque .lf{fill:#4f9a4d;}
+  html[data-escena="bosque"][data-theme="dark"] .deco.bosque .lf2{fill:#46893f;}
+  /* --- Bosque (oscuro automático) --- */
+  @media (prefers-color-scheme:dark){
+    html[data-escena="bosque"]:not([data-theme="light"]):not([data-theme="dark"]){--info:#7fc98a;--primary:#7fc98a;--info-bg:#1d3320;
+      --bg:#10160e;--surface:#1a2116;--surface2:#202a1b;--surface3:#283422;--border:#2a3622;--border2:#3b4b31;}
+    html[data-escena="bosque"]:not([data-theme="light"]):not([data-theme="dark"]) #escenaDeco{background:
+      radial-gradient(circle at 10% -2%,#1c2e18 0%,transparent 44%),
+      radial-gradient(circle at 92% 6%,#172611 0%,transparent 42%),
+      linear-gradient(180deg,#10160e,#0c120a);}
+    html[data-escena="bosque"]:not([data-theme="light"]):not([data-theme="dark"]) .deco.bosque .st{stroke:#5fa85c;}
+    html[data-escena="bosque"]:not([data-theme="light"]):not([data-theme="dark"]) .deco.bosque .lf{fill:#4f9a4d;}
+    html[data-escena="bosque"]:not([data-theme="light"]):not([data-theme="dark"]) .deco.bosque .lf2{fill:#46893f;}
+  }
+  /* Botones y tarjetas mejorados en cualquier tema deluxe */
+  html[data-escena] .btn{border-radius:14px;}
+  html[data-escena="bosque"] .btn.primary{background:linear-gradient(135deg,#54a866,#2f7a44);border:none;color:#fff;
+    box-shadow:0 5px 16px rgba(47,122,68,.34),inset 0 1px 0 rgba(255,255,255,.22);}
+  html[data-escena="bosque"] .btn.primary:active{box-shadow:0 2px 8px rgba(47,122,68,.3);}
+  html[data-escena] .card{border-radius:16px;box-shadow:0 3px 14px rgba(40,70,35,.10);}
+  html[data-escena] .nav button.on,html[data-escena] .seg button.on{box-shadow:inset 0 -2px 0 var(--info);}
 </style>
 </head>
 <body>
@@ -171,8 +235,75 @@
   // ===== TEMA (Automático / Claro / Oscuro) — preferencia por dispositivo =====
   var TEMA_KEY="nh_tema_v1";
   function getTema(){ try{ return localStorage.getItem(TEMA_KEY)||"auto"; }catch(e){ return "auto"; } }
-  function setTema(t){ try{ localStorage.setItem(TEMA_KEY,t); }catch(e){} aplicarTema(); }
+  function setTema(t){ try{ localStorage.setItem(TEMA_KEY,t); }catch(e){} aplicarTema(); if(typeof aplicarTinte==="function") aplicarTinte(); }
   function aplicarTema(){ var el=document.documentElement, t=getTema(); if(t==="auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme",t); }
+  // ===== PALETA DE MARCA (color de acento de toda la app) — preferencia por dispositivo =====
+  var PALETA_KEY="nh_paleta_v1";
+  var PALETAS=[
+    {id:"verde",nombre:"Bosque",emoji:"🌿",col:"#2e7d6a"},
+    {id:"rosa", nombre:"Pinkie",emoji:"🌸",col:"#c63f7e"},
+    {id:"azul", nombre:"Mar",   emoji:"🌊",col:"#2f6db0"},
+    {id:"lila", nombre:"Lavanda",emoji:"💜",col:"#7a4fd0"},
+    {id:"coral",nombre:"Coral", emoji:"🪸",col:"#d4612f"}
+  ];
+  function getPaleta(){ try{ return localStorage.getItem(PALETA_KEY)||"verde"; }catch(e){ return "verde"; } }
+  function setPaleta(p){ try{ localStorage.setItem(PALETA_KEY,p); }catch(e){} aplicarPaleta(); }
+  function aplicarPaleta(){ var el=document.documentElement, p=getPaleta(); if(p==="verde") el.removeAttribute("data-palette"); else el.setAttribute("data-palette",p); }
+  // ===== TINTE DE FONDO (tiñe bg/surface/border, independiente del acento) =====
+  var TINTE_KEY="nh_tinte_v1";
+  var TINTE_VARS=["--bg","--surface","--surface2","--surface3","--border","--border2"];
+  var TINTES={
+    rosa:{nombre:"Rosado",emoji:"🌸",col:"#e9b9cf",
+      light:{"--bg":"#faf2f6","--surface":"#fffafc","--surface2":"#f5e9ef","--surface3":"#ecdce4","--border":"#f0e2e9","--border2":"#e3d0da"},
+      dark: {"--bg":"#1b181a","--surface":"#252124","--surface2":"#2c2629","--surface3":"#373034","--border":"#342c31","--border2":"#473f44"}},
+    azul:{nombre:"Azulado",emoji:"🌊",col:"#aecbe9",
+      light:{"--bg":"#f1f5fa","--surface":"#fafcff","--surface2":"#e9eff6","--surface3":"#dce6f0","--border":"#e2eaf3","--border2":"#d0dcea"},
+      dark: {"--bg":"#171a1d","--surface":"#202428","--surface2":"#262b30","--surface3":"#31363c","--border":"#2d333a","--border2":"#3f4650"}},
+    lila:{nombre:"Lila",emoji:"💜",col:"#c7b9e9",
+      light:{"--bg":"#f5f2fa","--surface":"#fcfaff","--surface2":"#ede9f6","--surface3":"#e0dcf0","--border":"#e8e2f3","--border2":"#dad0ea"},
+      dark: {"--bg":"#1a181d","--surface":"#222128","--surface2":"#28262f","--surface3":"#332f3c","--border":"#302d3a","--border2":"#423f4f"}},
+    coral:{nombre:"Coral",emoji:"🪸",col:"#e9c4b1",
+      light:{"--bg":"#faf3ef","--surface":"#fffbf9","--surface2":"#f6ece6","--surface3":"#f0e1d8","--border":"#f3e6df","--border2":"#ead7cd"},
+      dark: {"--bg":"#1c1917","--surface":"#262320","--surface2":"#2d2825","--surface3":"#383230","--border":"#352e2b","--border2":"#48413c"}}
+  };
+  function getTinte(){ try{ return localStorage.getItem(TINTE_KEY)||"neutro"; }catch(e){ return "neutro"; } }
+  function setTinte(t){ try{ localStorage.setItem(TINTE_KEY,t); }catch(e){} aplicarTinte(); }
+  function aplicarTinte(){ var el=document.documentElement, t=getTinte();
+    TINTE_VARS.forEach(function(v){ el.style.removeProperty(v); });
+    if(el.getAttribute("data-escena")) return;            // un tema deluxe manda sobre el tinte simple
+    if(t==="neutro"||!TINTES[t]) return;
+    var map=TINTES[t][temaResuelto()]||{}; for(var k in map) el.style.setProperty(k,map[k]); }
+  // ===== TEMAS DELUXE (Premium) — color + decoración (lianas, flores) + botones mejorados =====
+  var ESCENA_KEY="nh_escena_v1";
+  var ESCENAS={
+    bosque:{nombre:"Bosque encantado",emoji:"🌿",col:"#3c8a4e",desc:"Lianas con flores, fondo de bosque y botones con vida."}
+  };
+  function getEscena(){ try{ return localStorage.getItem(ESCENA_KEY)||""; }catch(e){ return ""; } }
+  function setEscena(e){ try{ localStorage.setItem(ESCENA_KEY,e||""); }catch(err){} aplicarEscena(); }
+  function escenaDecoHTML(id){
+    var flor='<g class="f"><circle cx="0" cy="-7" r="5"/><circle cx="7" cy="-2" r="5"/><circle cx="4" cy="6" r="5"/><circle cx="-4" cy="6" r="5"/><circle cx="-7" cy="-2" r="5"/><circle cx="0" cy="0" r="3.6" class="fc"/></g>';
+    if(id==="bosque"){
+      var liana='<path class="st" d="M30 -12 C44 48 16 88 30 140 C42 184 20 214 34 248" fill="none" stroke-width="6" stroke-linecap="round"/>'+
+        '<path class="lf" d="M30 52 q-28 -10 -38 7 q24 17 38 -7z"/>'+
+        '<path class="lf2" d="M30 108 q26 -10 38 7 q-24 17 -38 -7z"/>'+
+        '<path class="lf" d="M32 178 q-26 -9 -36 7 q22 15 36 -7z"/>'+
+        '<g transform="translate(18,150)">'+flor+'</g>'+
+        '<g transform="translate(42,32) scale(.8)">'+flor+'</g>';
+      return '<svg class="deco bosque" width="150" height="250" viewBox="0 0 80 250" style="top:0;left:0;">'+liana+'</svg>'+
+             '<svg class="deco bosque" width="150" height="250" viewBox="0 0 80 250" style="top:0;right:0;transform:scaleX(-1);">'+liana+'</svg>'+
+             '<svg class="deco bosque" width="120" height="150" viewBox="0 0 80 120" style="bottom:88px;right:0;transform:scaleX(-1);">'+
+               '<path class="lf" d="M40 120 q-30 -14 -40 4 q26 20 40 -4z"/><path class="lf2" d="M40 96 q28 -16 40 2 q-26 22 -40 -2z"/><g transform="translate(30,78)">'+flor+'</g></svg>';
+    }
+    return "";
+  }
+  function aplicarEscena(){
+    var el=document.documentElement, e=getEscena(), on=!!(e&&ESCENAS[e]&&esPremium());
+    if(on) el.setAttribute("data-escena",e); else el.removeAttribute("data-escena");
+    var node=document.getElementById("escenaDeco");
+    if(on){ if(!node){ node=document.createElement("div"); node.id="escenaDeco"; document.body.appendChild(node); } node.innerHTML=escenaDecoHTML(e); }
+    else if(node){ node.parentNode.removeChild(node); }
+    aplicarTinte();
+  }
   function temaResuelto(){ var t=getTema(); if(t==="dark")return "dark"; if(t==="light")return "light"; return (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"; }
 
   // Iconos SVG de línea para la navegación (heredan el color con currentColor)
@@ -1069,8 +1200,28 @@
         '<button id="tmAuto" class="'+(tema==="auto"?"on":"")+'" style="flex:1;">🔄 Auto</button>'+
         '<button id="tmLight" class="'+(tema==="light"?"on":"")+'" style="flex:1;">☀️ Claro</button>'+
         '<button id="tmDark" class="'+(tema==="dark"?"on":"")+'" style="flex:1;">🌙 Oscuro</button>'+
-      '</div><p class="muted" style="margin:8px 0 0;font-size:12px;">«Auto» sigue el modo de tu teléfono.</p></div>';
-    h+='<div class="sec-title">🎨 Color (gratis)</div><div class="card soft"><div class="row" style="flex-wrap:wrap;gap:8px;">';
+      '</div><p class="muted" style="margin:8px 0 0;font-size:12px;">«Auto» sigue el modo de tu teléfono.</p>'+
+      '<label class="lbl" style="margin:12px 0 6px;">Tinte del fondo</label><div class="row" style="flex-wrap:wrap;gap:8px;">'+
+        (function(){ var tin=getTinte(),s='';
+          s+='<button data-tint="neutro" style="flex:1;min-width:70px;border:2px solid '+(tin==="neutro"?"var(--info)":"var(--border2)")+';border-radius:var(--radius);background:var(--surface2);color:var(--text2);padding:8px 6px;font-size:12px;font-weight:600;">Neutro</button>';
+          Object.keys(TINTES).forEach(function(id){ var t=TINTES[id]; s+='<button data-tint="'+id+'" style="flex:1;min-width:70px;border:2px solid '+(tin===id?"var(--info)":"var(--border2)")+';border-radius:var(--radius);background:'+t.col+';color:#3a2f33;padding:8px 6px;font-size:12px;font-weight:600;">'+t.emoji+' '+t.nombre+'</button>'; });
+          return s; })()+
+      '</div></div>';
+    var palAct=getPaleta();
+    h+='<div class="sec-title">🎨 Paleta de la app <span class="muted" style="font-weight:400;">(gratis)</span></div><div class="card soft"><p class="muted" style="margin:0 0 10px;">El color de toda la app: botones, pestañas e iconos.</p><div class="row" style="flex-wrap:wrap;gap:10px;">';
+    PALETAS.forEach(function(p){ h+='<button data-pal="'+p.id+'" style="flex:1;min-width:84px;border:2px solid '+(palAct===p.id?p.col:"var(--border2)")+';border-radius:var(--radius);background:var(--surface);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;"><span style="width:26px;height:26px;border-radius:50%;background:'+p.col+';display:block;"></span><span style="font-size:12px;font-weight:600;color:var(--text2);">'+p.emoji+' '+p.nombre+'</span></button>'; });
+    h+='</div></div>';
+    // ----- Temas deluxe (Premium) -----
+    var escAct=getEscena(),prem=esPremium();
+    h+='<div class="sec-title">✨ Temas deluxe <span class="pill" style="background:var(--warning-bg);color:var(--warning);">Premium</span></div>';
+    h+='<p class="muted" style="margin:-2px 0 8px;">No solo cambian el color: añaden decoración (lianas, flores) y botones con más vida.</p>';
+    h+='<div class="shopgrid">';
+    if(prem) h+='<button data-esc="" class="shop'+(escAct?"":" owned")+'" style="text-align:center;"><div style="font-size:26px;">🚫</div><div style="font-weight:600;font-size:13px;margin-top:2px;">Ninguno</div><div class="muted" style="color:var(--'+(escAct?"text2":"success")+');">'+(escAct?"Usar":"En uso")+'</div></button>';
+    Object.keys(ESCENAS).forEach(function(id){ var e=ESCENAS[id],act=escAct===id;
+      h+='<div '+(prem?'data-esc="'+id+'"':'data-esc-lock="1"')+' class="shop'+(act?" owned":"")+'" style="text-align:center;position:relative;border-color:'+(act?e.col:"var(--border)")+';"><div style="font-size:26px;">'+e.emoji+'</div><div style="font-weight:600;font-size:13px;margin-top:2px;">'+esc(e.nombre)+'</div><div class="muted" style="color:var(--'+(act?"success":prem?"text2":"warning")+');">'+(act?"En uso":prem?"Usar":"🔒 Premium")+'</div></div>'; });
+    h+='</div>';
+    if(!prem) h+='<div style="margin-top:8px;">'+cardBloqueoPremium("Temas deluxe","Desbloquea fondos decorados con lianas, flores y botones premium con tu suscripción.")+'</div>';
+    h+='<div class="sec-title">🐾 Color de tu mascota <span class="muted" style="font-weight:400;">(gratis)</span></div><div class="card soft"><div class="row" style="flex-wrap:wrap;gap:8px;">';
     COLORES.forEach(function(c){ h+='<button class="colorbtn '+(m.color===c?"on":"")+'" data-col="'+c+'" style="background:'+c+';"></button>'; });
     h+='</div></div><div class="sec-title">🎁 Tienda — accesorios</div><p class="muted" style="margin-bottom:8px;">Compra con puntos. Lo desbloqueado queda tuyo.</p>';
     h+=shopGroup("Gorros","gorro",GORROS,m)+shopGroup("Gafas","gafas",GAFAS,m)+shopGroup("Fondos","fondo",FONDOS,m);
@@ -1082,6 +1233,11 @@
     var tmA=document.getElementById("tmAuto"); if(tmA)tmA.onclick=function(){ setTema("auto"); render(); };
     var tmL=document.getElementById("tmLight"); if(tmL)tmL.onclick=function(){ setTema("light"); render(); };
     var tmD=document.getElementById("tmDark"); if(tmD)tmD.onclick=function(){ setTema("dark"); render(); };
+    Array.prototype.forEach.call(content.querySelectorAll("[data-pal]"),function(b){ b.onclick=function(){ setPaleta(b.getAttribute("data-pal")); render(); }; });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-tint]"),function(b){ b.onclick=function(){ setTinte(b.getAttribute("data-tint")); render(); }; });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-esc]"),function(b){ b.onclick=function(){ setEscena(b.getAttribute("data-esc")); render(); }; });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-esc-lock]"),function(b){ b.onclick=irPremium; });
+    wireGoPrem();
     Array.prototype.forEach.call(content.querySelectorAll("[data-col]"),function(b){ b.onclick=function(){ m.color=b.getAttribute("data-col"); save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-buy]"),function(b){ b.onclick=function(){ var parts=b.getAttribute("data-buy").split("|"),cat=parts[0],val=parts[1],key=cat+":"+val; var precio=val==="none"?0:((PRECIOS[cat]&&PRECIOS[cat][val]!==undefined)?PRECIOS[cat][val]:0); var owned=val==="none"||m.owned.indexOf(key)>=0;
       if(owned){ m[cat]=val; save(); render(); } else if(saldo>=precio){ state.puntos[currentUser]=saldo-precio; m.owned.push(key); m[cat]=val; save(); render(); } else setStatus("Te faltan "+(precio-saldo)+" puntos"); }; });
@@ -1459,6 +1615,9 @@
   }
 
   aplicarTema();
+  aplicarPaleta();
+  aplicarEscena();
+  if(window.matchMedia){ try{ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ if(getTema()==="auto") aplicarTinte(); }); }catch(e){} }
   iniciar();
 })();
 </script>
