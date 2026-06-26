@@ -151,15 +151,18 @@
   var COLORES=["#EF9F27","#888780","#85B7EB","#ED93B1","#97C459","#AFA9EC","#F0997B"];
   var TABS=[
     {id:"integrantes",ic:"👥",t:"Familia"},{id:"gastos",ic:"💵",t:"Gastos"},{id:"aporte",ic:"⚖️",t:"Aporte"},
-    {id:"metas",ic:"🎯",t:"Metas"},{id:"quehaceres",ic:"📅",t:"Tareas"},
+    {id:"metas",ic:"🎯",t:"Metas"},{id:"quehaceres",ic:"📅",t:"Quehaceres"},{id:"asignadas",ic:"📌",t:"Encargos"},
     {id:"mascota",ic:"🐾",t:"Mascota"},{id:"notas",ic:"📝",t:"Notas"},{id:"cierre",ic:"📊",t:"Cierre"},{id:"ajustes",ic:"⚙️",t:"Ajustes"}
   ];
-  var MENU_IDS={cierre:1,ajustes:1}; // estas van en el menú ⋯ de arriba, no en la barra inferior
+  var MENU_IDS={integrantes:1,cierre:1,ajustes:1}; // estas van en el menú ⋯ de arriba, no en la barra inferior
 
-  var DEFAULT={adminId:null,usuarios:[],duenos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
+  var DEFAULT={adminId:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
   var state=JSON.parse(JSON.stringify(DEFAULT));
   var currentUser=null, activeTab="integrantes", subGastos="cuentas";
   var sb=null, hogar=null, conectado=false, guardando=false, ultimoGuardado="";
+  // id único de ESTE dispositivo: sirve para ignorar el "eco" de mis propios
+  // guardados en el realtime (si no, mis cambios recién hechos se revierten solos)
+  var clientId=Math.random().toString(36).slice(2)+Date.now().toString(36);
   var sesion=null, familias=[], familiaActual=null;
   var root=document.getElementById("root");
 
@@ -179,6 +182,7 @@
     aporte:'<path d="M12 4.5v15"/><path d="M8 20h8"/><path d="M4.5 7.2h15"/><path d="M9.2 6.4 12 5.2l2.8 1.2"/><path d="M4.5 7.2 2.3 12a2.2 2.2 0 0 0 4.4 0z"/><path d="M19.5 7.2 17.3 12a2.2 2.2 0 0 0 4.4 0z"/>',
     metas:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/>',
     quehaceres:'<rect x="4" y="5" width="16" height="15.2" rx="2.6"/><path d="M4 9.3h16"/><path d="M8 3.4v3.8"/><path d="M16 3.4v3.8"/><path d="M8.7 14.2 10.6 16l3.6-4.1"/>',
+    asignadas:'<rect x="6" y="4.6" width="12" height="16" rx="2"/><path d="M9 4.6a3 3 0 0 1 6 0"/><path d="M8.6 11.2l1.5 1.5 3-3.2"/><path d="M14 16.5h2"/>',
     mascota:'<ellipse cx="7.4" cy="9.2" rx="1.7" ry="2.2"/><ellipse cx="12" cy="7.7" rx="1.8" ry="2.4"/><ellipse cx="16.6" cy="9.2" rx="1.7" ry="2.2"/><path d="M12 12.2c-2.6 0-4.6 2-4.6 4.3 0 1.8 1.6 2.7 4.6 2.7s4.6-.9 4.6-2.7c0-2.3-2-4.3-4.6-4.3z"/>',
     notas:'<path d="M7 3.6h6.5l4.5 4.5V19a1.6 1.6 0 0 1-1.6 1.6H7A1.6 1.6 0 0 1 5.4 19V5.2A1.6 1.6 0 0 1 7 3.6z"/><path d="M13.2 3.6V8.4h4.8"/><path d="M8.6 12.6h6"/><path d="M8.6 15.8h4.2"/>',
     cierre:'<path d="M4 20h16"/><rect x="5.4" y="11.5" width="3.3" height="6" rx="1"/><rect x="10.35" y="7.5" width="3.3" height="10" rx="1"/><rect x="15.3" y="14" width="3.3" height="3.5" rx="1"/>',
@@ -191,6 +195,19 @@
   function adminUser(){ return state.usuarios[0]||null; }
   function esAdmin(){ return !!(sesion&&sesion.user&&state.adminId&&sesion.user.id===state.adminId); }
   function colorFor(u){ var i=state.usuarios.indexOf(u); return PALETTE[i%PALETTE.length]||"info"; }
+  function esHijo(u){ state.hijos=state.hijos||{}; return !!state.hijos[u]; }
+  function adultos(){ return state.usuarios.filter(function(u){ return !esHijo(u); }); } // los que sí participan del reparto de cuentas
+  function soyHijo(){ return !!currentUser && esHijo(currentUser); }
+  function hayHijos(){ return state.usuarios.some(function(u){ return esHijo(u); }); }
+  // ---- Permisos de pestañas por rol ----
+  // Un hijo solo ve Quehaceres, Encargos y Mascota (+ Ajustes para cerrar sesión).
+  // Encargos lo ven SOLO el admin y los hijos (un adulto que no es admin no lo ve).
+  var CHILD_TABS={quehaceres:1,asignadas:1,mascota:1,ajustes:1};
+  function tabPermitido(id){
+    if(id==="asignadas") return (esAdmin()||soyHijo()) && hayHijos();   // Encargos: solo admin e hijos, y solo si hay algún hijo
+    if(soyHijo()) return !!CHILD_TABS[id];               // el hijo ve un set reducido
+    return true;                                         // adultos ven el resto normal
+  }
   function pesoNivel(n){ return NIVELES[n||2].min; }
   function pts(u){ return state.puntos[u]||0; }
   function masc(u){ if(!state.mascota[u]) state.mascota[u]={tipo:"gato",color:COLORES[0],gorro:"none",gafas:"none",fondo:"plain",owned:[]}; return state.mascota[u]; }
@@ -207,6 +224,21 @@
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(txt).then(ok,function(){ fallbackCopiar(txt,ok,fail); });
     } else { fallbackCopiar(txt,ok,fail); }
+  }
+  // Modal informativo reutilizable: título, lista de líneas (con emoji) y botón para cerrar
+  function popupInfo(titulo,lineas,textoBoton){
+    var prev=document.getElementById("popOverlay"); if(prev)prev.remove();
+    var ov=document.createElement("div"); ov.id="popOverlay";
+    ov.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;";
+    var items=lineas.map(function(l){ return '<li style="display:flex;gap:9px;margin-bottom:9px;line-height:1.35;"><span style="flex:none;">'+l.ic+'</span><span>'+l.t+'</span></li>'; }).join("");
+    ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;max-width:380px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.3);">'+
+      '<div style="font-size:18px;font-weight:700;margin-bottom:12px;">'+titulo+'</div>'+
+      '<ul style="list-style:none;padding:0;margin:0 0 16px;font-size:14px;color:var(--text2);">'+items+'</ul>'+
+      '<button class="btn primary block" id="popClose">'+(textoBoton||"¡Entendido!")+'</button></div>';
+    document.body.appendChild(ov);
+    function cerrar(){ ov.remove(); }
+    ov.querySelector("#popClose").onclick=cerrar;
+    ov.onclick=function(e){ if(e.target===ov)cerrar(); };
   }
 
   // ====== PANTALLAS DE ESPERA / ERROR ======
@@ -237,16 +269,29 @@
       '<div id="authMsg"></div>'+
       '<div class="field" style="margin-top:14px;"><label class="lbl">Correo</label><input id="auEmail" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>'+
       '<div class="field"><label class="lbl">Contraseña</label><input id="auPass" type="password" autocomplete="'+(esLogin?"current-password":"new-password")+'" placeholder="••••••••"></div>'+
+      (esLogin?'':'<div class="field"><label class="lbl">Repite la contraseña</label><input id="auPass2" type="password" autocomplete="new-password" placeholder="••••••••"></div>')+
       '<button class="btn primary block" id="auGo" style="margin-top:8px;">'+(esLogin?"Entrar":"Crear cuenta")+'</button>'+
+      '<div class="row" style="align-items:center;gap:10px;margin:16px 0 12px;"><div style="flex:1;height:1px;background:var(--border);"></div><span class="muted" style="font-size:12px;">o</span><div style="flex:1;height:1px;background:var(--border);"></div></div>'+
+      '<button class="btn block" id="auGoogle" style="display:flex;align-items:center;justify-content:center;gap:10px;">'+
+        '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.02-3.7H.96v2.34A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.98 10.72a5.4 5.4 0 0 1 0-3.44V4.96H.96a9 9 0 0 0 0 8.1l3.02-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.96L3.98 7.3C4.68 5.16 6.66 3.58 9 3.58z"/></svg>'+
+        '<span>'+(esLogin?"Iniciar":"Continuar")+' con Google</span></button>'+
       '<p class="muted" style="margin-top:16px;text-align:center;">'+(esLogin?"¿No tienes cuenta? ":"¿Ya tienes cuenta? ")+'<a href="#" id="auSwitch" style="color:var(--info);font-weight:600;">'+(esLogin?"Crear una":"Iniciar sesión")+'</a></p>'+
     '</div>';
     function setMsg(t,tipo){ var b=document.getElementById("authMsg"); b.innerHTML=t?'<div class="card" style="background:var(--'+(tipo||"danger")+'-bg);color:var(--'+(tipo||"danger")+');border:none;margin-top:12px;">'+esc(t)+'</div>':''; }
     document.getElementById("auSwitch").onclick=function(e){ e.preventDefault(); renderAuth(esLogin?"registro":"login"); };
+    var auG=document.getElementById("auGoogle"); if(auG) auG.onclick=function(){
+      setMsg("Abriendo Google…","info");
+      sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}}).then(function(res){
+        if(res.error){ setMsg(res.error.message.indexOf("provider is not enabled")>=0?"El inicio con Google aún no está activado en el servidor. Usa correo y contraseña por ahora.":traducirAuthError(res.error.message)); }
+      });
+    };
     document.getElementById("auGo").onclick=function(){
       var email=document.getElementById("auEmail").value.trim();
       var pass=document.getElementById("auPass").value;
       if(!email||!pass){ setMsg("Escribe tu correo y contraseña."); return; }
       if(pass.length<6){ setMsg("La contraseña debe tener al menos 6 caracteres."); return; }
+      if(!esLogin){ var pass2=document.getElementById("auPass2").value;
+        if(pass!==pass2){ setMsg("Las contraseñas no coinciden. Vuelve a escribirlas igual."); return; } }
       var btn=document.getElementById("auGo"); btn.disabled=true; btn.textContent="Un momento…";
       var p=esLogin?sb.auth.signInWithPassword({email:email,password:pass}):sb.auth.signUp({email:email,password:pass});
       p.then(function(res){
@@ -410,6 +455,7 @@
     setStatus("Guardando…","on");
     if(saveTimer) clearTimeout(saveTimer);
     saveTimer=setTimeout(function(){
+      state._savedBy=clientId; // marca de quién hizo este guardado (para ignorar mi propio eco)
       sb.from("hogares").update({data:state, updated_at:new Date().toISOString()}).eq("id",hogar).then(function(res){
         if(res.error){ setStatus("Error al guardar","off"); }
         else { ultimoGuardado=new Date().toLocaleTimeString("es-CL"); setStatus("Guardado · "+ultimoGuardado,"on"); }
@@ -421,8 +467,9 @@
     try{
       sb.channel("hogar-"+hogar)
         .on("postgres_changes",{event:"UPDATE",schema:"public",table:"hogares",filter:"id=eq."+hogar},function(payload){
-          if(guardando) return;
           var nuevo=payload.new&&payload.new.data;
+          // ignora el eco de MIS propios guardados (si no, revierte cambios recién hechos)
+          if(nuevo&&nuevo._savedBy===clientId) return;
           if(nuevo){ state=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),nuevo); render(); setStatus("Actualizado por la familia · "+new Date().toLocaleTimeString("es-CL"),"on"); }
         }).subscribe();
     }catch(e){}
@@ -447,14 +494,14 @@
   function irATab(id){ activeTab=id; cerrarMenu(); render(); var w=document.querySelector(".wrap"); if(w)w.scrollIntoView({block:"start"}); }
   function buildNav(){
     var nav=document.getElementById("nav"); nav.innerHTML="";
-    TABS.forEach(function(tab){ if(MENU_IDS[tab.id]) return; var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+(iconoTab(tab.id)||tab.ic)+'</span>'+tab.t;
+    TABS.forEach(function(tab){ if(MENU_IDS[tab.id]) return; if(!tabPermitido(tab.id)) return; var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+(iconoTab(tab.id)||tab.ic)+'</span>'+tab.t;
       b.onclick=function(){ irATab(tab.id); }; nav.appendChild(b); });
   }
   function cerrarMenu(){ var m=document.getElementById("menu"),btn=document.getElementById("menuBtn"); if(m)m.classList.remove("open"); if(btn)btn.classList.remove("on"); }
   function buildMenu(){
     var m=document.getElementById("menu"),btn=document.getElementById("menuBtn"); if(!m||!btn) return;
     m.innerHTML="";
-    TABS.forEach(function(tab){ if(!MENU_IDS[tab.id]) return; var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+(iconoTab(tab.id)||tab.ic)+'</span>'+tab.t;
+    TABS.forEach(function(tab){ if(!MENU_IDS[tab.id]) return; if(!tabPermitido(tab.id)) return; var b=document.createElement("button"); b.className=activeTab===tab.id?"on":""; b.innerHTML='<span class="ni">'+(iconoTab(tab.id)||tab.ic)+'</span>'+tab.t;
       b.onclick=function(){ irATab(tab.id); }; m.appendChild(b); });
     btn.onclick=function(e){ e.stopPropagation(); var abierto=m.classList.toggle("open"); btn.classList.toggle("on",abierto); };
   }
@@ -462,7 +509,7 @@
   function calcularAportes(){
     var cT=state.cuentas.reduce(function(s,i){return s+(+i.monto||0);},0);
     var dT=state.despensa.reduce(function(s,i){return s+(+i.monto||0);},0);
-    var gasto=cT+dT, us=state.usuarios;
+    var gasto=cT+dT, us=adultos(); // los hijos no participan del reparto de cuentas
     function sueldo(u){return +state.sueldos[u]||0;} function minimo(u){return +state.minimos[u]||0;}
     var ingresoTotal=us.reduce(function(s,u){return s+sueldo(u);},0);
     var base={},baseTotal=0;
@@ -527,6 +574,7 @@
 
   function render(){
     getEls(); if(!content) return;
+    if(!tabPermitido(activeTab)) activeTab=soyHijo()?"asignadas":"gastos"; // redirige si la pestaña no corresponde al rol
     fillUserSel(); updatePts(); buildNav(); buildMenu();
     if(activeTab==="ajustes") return renderAjustes();
     if(activeTab==="integrantes") return renderIntegrantes();
@@ -542,6 +590,7 @@
     if(activeTab==="aporte") return renderAporte();
     if(activeTab==="metas") return renderMetas();
     if(activeTab==="quehaceres") return renderQuehaceres();
+    if(activeTab==="asignadas") return renderAsignadas();
     if(activeTab==="mascota") return renderMascota();
     if(activeTab==="notas") return renderNotas();
     if(activeTab==="cierre") return renderCierre();
@@ -611,16 +660,26 @@
     state.duenos=state.duenos||{};
     function puedeBorrar(nm){ return admin||(!!miId&&state.duenos[nm]===miId); }
     var h='<div class="card soft"><label class="lbl">Agregar integrante</label><div class="row"><input id="uN" placeholder="Tu nombre…" class="grow"><button class="btn primary" id="uAdd">Añadir</button></div><p class="muted" style="margin:6px 0 0;">Crea tu nombre para registrar tus puntos, tareas y mascota.'+(admin?' Como admin, puedes eliminar a cualquier integrante.':' Puedes eliminar el tuyo cuando quieras.')+'</p></div>';
+    h+='<div class="card soft"><label class="lbl">👶 Agregar un hijo/a</label><div class="row"><input id="hN" placeholder="Nombre del hijo/a…" class="grow"><button class="btn" id="hAdd">Agregar</button></div><p class="muted" style="margin:6px 0 0;">Tiene su mascota y recibe encargos para ganar puntos, pero <b>no participa del reparto de cuentas</b>. No necesita cuenta propia.</p></div>';
     if(state.usuarios.length===0) h+='<p class="empty">Aún no hay nadie. Añade al primero.</p>';
     else { h+='<p class="muted" style="margin:14px 0 6px;">'+state.usuarios.length+' integrante(s)</p>';
-      state.usuarios.forEach(function(u){ var m=masc(u),esAdminN=u===adminUser();
-        h+='<div class="card"><div class="row"><div>'+svgMascota(m,"ok",42)+'</div><div class="grow" style="font-weight:600;">'+esc(u)+' <span style="font-size:12px;color:var(--warning);font-weight:600;">· '+pts(u)+' pts</span></div>'+(esAdminN?'<span class="pill" style="background:var(--info-bg);color:var(--info);">🛡️ Admin</span>':'')+(puedeBorrar(u)?'<button class="del" data-del="'+esc(u)+'">🗑️</button>':'')+'</div></div>'; });
+      state.usuarios.forEach(function(u){ var m=masc(u),hijo=esHijo(u),esAdminN=(u===adminUser())&&!hijo;
+        h+='<div class="card"><div class="row"><div>'+svgMascota(m,"ok",42)+'</div><div class="grow" style="font-weight:600;">'+esc(u)+' <span style="font-size:12px;color:var(--warning);font-weight:600;">· '+pts(u)+' pts</span></div>'+(esAdminN?'<span class="pill" style="background:var(--info-bg);color:var(--info);">🛡️ Admin</span>':'')+(hijo?'<span class="pill" style="background:var(--success-bg);color:var(--success);">👶 Hijo/a</span>':'')+(puedeBorrar(u)?'<button class="del" data-del="'+esc(u)+'">🗑️</button>':'')+'</div></div>'; });
     }
     content.innerHTML=h;
     var add=function(){ var n=document.getElementById("uN").value.trim(); if(!n||state.usuarios.indexOf(n)>=0)return; state.usuarios.push(n); masc(n); if(miId)state.duenos[n]=miId; if(!currentUser)currentUser=n; save(); render(); };
     document.getElementById("uAdd").onclick=add;
     document.getElementById("uN").addEventListener("keydown",function(e){ if(e.key==="Enter")add(); });
-    Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ var nm=b.getAttribute("data-del"); if(!puedeBorrar(nm))return; if(!confirm("¿Eliminar a "+nm+"? Se borran sus puntos y su mascota.")) return; state.usuarios=state.usuarios.filter(function(x){return x!==nm;}); delete state.sueldos[nm];delete state.minimos[nm];delete state.puntos[nm];delete state.mascota[nm];delete state.duenos[nm]; if(currentUser===nm)currentUser=state.usuarios[0]||null; save(); render(); }; });
+    var addHijo=function(){ var n=document.getElementById("hN").value.trim(); if(!n)return; if(state.usuarios.indexOf(n)>=0){ setStatus("Ya existe alguien con ese nombre"); return; } state.usuarios.push(n); state.hijos[n]=true; masc(n); if(miId)state.duenos[n]=miId; save(); render();
+      popupInfo("👶 ¡"+esc(n)+" se sumó a la familia!",[
+        {ic:"📌",t:"Ya puedes asignarle <b>Encargos</b> (apareció esa pestaña). Solo tú y "+esc(n)+" los ven."},
+        {ic:"🐾",t:"Tiene su propia <b>mascota</b> y gana puntos al completar tareas."},
+        {ic:"📅",t:"Aparece en <b>Quehaceres</b> y ayuda con la casa."},
+        {ic:"🔒",t:"<b>No</b> ve Gastos, Aporte ni Metas — esas son cosas de adultos."}
+      ],"¡Genial!"); };
+    document.getElementById("hAdd").onclick=addHijo;
+    document.getElementById("hN").addEventListener("keydown",function(e){ if(e.key==="Enter")addHijo(); });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ var nm=b.getAttribute("data-del"); if(!puedeBorrar(nm))return; if(!confirm("¿Eliminar a "+nm+"? Se borran sus puntos y su mascota.")) return; state.usuarios=state.usuarios.filter(function(x){return x!==nm;}); delete state.sueldos[nm];delete state.minimos[nm];delete state.puntos[nm];delete state.mascota[nm];delete state.duenos[nm];delete state.hijos[nm]; if(currentUser===nm)currentUser=state.usuarios[0]||null; save(); render(); }; });
   }
 
   function renderGastos(){
@@ -657,7 +716,9 @@
     if(calc.ingresoTotal===0) h+='<p class="empty">Ingresen sus sueldos para ver el reparto.</p>';
     else { h+='<div class="metrics"><div class="metric"><div class="l">Cuentas</div><div class="v">'+PESO(calc.cuentasTotal)+'</div></div><div class="metric"><div class="l">Despensa</div><div class="v">'+PESO(calc.despensaTotal)+'</div></div></div>';
       if(calc.sinExcedente) h+='<div class="card" style="background:var(--warning-bg);color:var(--warning);border:none;">⚠️ Con los mínimos actuales nadie tiene excedente. Se divide en partes iguales.</div>';
-      state.usuarios.forEach(function(u){ var r=calc.res[u],c=colorFor(u),wC=r.aporte>0?(r.aCuentas/r.aporte)*100:50;
+      var nHijos=state.usuarios.length-adultos().length;
+      if(nHijos>0) h+='<div class="card soft" style="font-size:13px;">👶 '+nHijos+' hijo(s) no participan del reparto de cuentas.</div>';
+      adultos().forEach(function(u){ var r=calc.res[u],c=colorFor(u),wC=r.aporte>0?(r.aCuentas/r.aporte)*100:50;
         h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px;"><span class="pill" style="background:var(--'+c+'-bg);color:var(--'+c+');">'+esc(u)+'</span><span class="muted">'+(r.sueldo>0?"Sueldo "+PESO(r.sueldo):"Sin sueldo")+'</span></div><div style="font-size:13px;margin-bottom:5px;">Aporta <b style="font-size:15px;">'+PESO(r.aporte)+'</b> <span class="muted">('+PCT(r.sueldo>0?(r.aporte/r.sueldo)*100:0)+')</span></div><div class="bar" style="margin-bottom:8px;"><div style="width:'+wC+'%;background:var(--info);"></div><div style="width:'+(100-wC)+'%;background:var(--warning);"></div></div><div class="grid2"><div class="metric" style="padding:7px 9px;"><div class="muted">💵 Cuentas</div><div style="font-weight:600;">'+PESO(r.aCuentas)+'</div></div><div class="metric" style="padding:7px 9px;"><div class="muted">🛒 Despensa</div><div style="font-weight:600;">'+PESO(r.aDespensa)+'</div></div></div><div style="font-size:13px;margin-top:8px;">Le queda libre <b style="color:var(--success);">'+PESO(r.queda)+'</b></div></div>'; });
     }
     content.innerHTML=h;
@@ -719,20 +780,6 @@
       state.usuarios.forEach(function(u){ var c=colorFor(u),mins=p.carga[u],horas=mins>=60?(Math.round(mins/6)/10)+" h":mins+" min";
         h+='<div class="card" style="padding:8px 10px;"><div class="row" style="justify-content:space-between;margin-bottom:6px;"><span class="pill" style="background:var(--'+c+'-bg);color:var(--'+c+');">'+esc(u)+'</span><span class="muted">~'+horas+' · '+p.vecesPesada[u]+' pes.</span></div><div class="bar"><div style="width:'+Math.round((mins/maxCarga)*100)+'%;background:var(--'+c+');"></div></div></div>'; });
       h+='</div>'; }
-    // ---- Tareas asignadas (solo el admin asigna; el resto solo ve las suyas) ----
-    h+='<div class="sec-title">📌 Tareas asignadas</div>';
-    if(admin){
-      h+='<div class="card soft"><label class="lbl">Asignar una tarea a alguien</label>'+
-        '<div class="field"><input id="asN" placeholder="Ej: Ordenar tu cuarto, sacar la basura…"></div>'+
-        '<div class="row" style="gap:8px;margin-bottom:8px;">'+
-          '<select id="asPara" class="smallinput grow">'+state.usuarios.map(function(u){return '<option value="'+esc(u)+'">'+esc(u)+'</option>';}).join("")+'</select>'+
-          '<select id="asNivel" class="smallinput grow"><option value="1">Ligera (+5)</option><option value="2" selected>Media (+10)</option><option value="3">Pesada (+20)</option></select>'+
-        '</div><button class="btn primary block" id="asAdd">Asignar tarea</button></div>';
-    }
-    var asigVis=admin?state.asignadas:state.asignadas.filter(function(a){return a.para===currentUser;});
-    if(asigVis.length===0) h+='<p class="empty">'+(admin?'Aún no has asignado tareas.':'No tienes tareas asignadas.')+'</p>';
-    else asigVis.slice().reverse().forEach(function(a){ var nv=NIVELES[a.nivel||2],mia=(a.para===currentUser),puede=admin||mia;
-      h+='<div class="card"><div class="row"><button class="check '+(a.hecha?"done":"")+'" data-asig="'+a.id+'" '+(puede?'':'disabled style="opacity:.4;"')+'>'+(a.hecha?"✓":"")+'</button><div class="grow"><div style="font-weight:600;'+(a.hecha?'text-decoration:line-through;color:var(--text3);':'')+'">'+esc(a.nombre)+'</div><div class="muted">Para <b>'+esc(a.para)+'</b> · '+nv.nombre+' · +'+nv.pts+' pts'+(a.hecha?' · hecha ✓':'')+'</div></div>'+(admin?'<button class="del" data-delasig="'+a.id+'">🗑️</button>':'')+'</div></div>'; });
     h+='<div class="card soft" style="margin-top:12px;"><label class="lbl">Agregar quehacer</label><div class="field"><input id="qN" placeholder="Cocinar, trapear, patio, baño…"></div><div class="row" style="gap:8px;margin-bottom:8px;"><select id="qNivel" class="smallinput grow"><option value="1">Ligera</option><option value="2" selected>Media</option><option value="3">Pesada</option></select><select id="qFreq" class="smallinput grow"><option value="diario">Todos los días</option><option value="dias" selected>Días específicos</option></select></div><div id="qDias" class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:8px;">'+DIAS.map(function(d,i){return '<button type="button" class="daybtn" data-pd="'+i+'">'+d+'</button>';}).join("")+'</div><button class="btn primary block" id="qAdd">Agregar</button></div>';
     if(tareas.length>0){ h+='<p class="muted" style="margin:14px 0 6px;">Tus quehaceres ('+tareas.length+')</p>';
       tareas.forEach(function(t){ var nv=NIVELES[t.nivel||2],ft=t.freq==="diario"?"Todos los días":(t.dias&&t.dias.length?t.dias.map(function(d){return DIAS[d];}).join(", "):"sin días");
@@ -747,6 +794,30 @@
     document.getElementById("qAdd").onclick=function(){ var n=document.getElementById("qN").value.trim(),nivel=+document.getElementById("qNivel").value,freq=freqSel.value; if(!n)return; var dias=freq==="diario"?[0,1,2,3,4,5,6]:Object.keys(picked).map(Number).sort(); if(freq==="dias"&&dias.length===0){setStatus("Elige al menos un día");return;} state.tareas.push({id:uid(),nombre:n,nivel:nivel,freq:freq,dias:dias}); save(); render(); };
     Array.prototype.forEach.call(content.querySelectorAll("[data-lvl]"),function(s){ s.onchange=function(){ var t=state.tareas.filter(function(x){return x.id===s.getAttribute("data-lvl");})[0]; if(t)t.nivel=+s.value; save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.tareas=state.tareas.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
+    Array.prototype.forEach.call(content.querySelectorAll("[data-check]"),function(b){ b.onclick=function(){ var parts=b.getAttribute("data-check").split("|"),key=parts[0],nivel=+parts[1],user=parts[2]; var cur=state.checks[key]&&state.checks[key].done;
+      if(!cur){ state.checks[key]={user:user,done:true}; var g=NIVELES[nivel||2].pts; darPuntos(user,g); var chip=b.parentNode; var f=document.createElement("div"); f.className="floatp"; f.textContent="+"+g; chip.style.position="relative"; chip.appendChild(f); setTimeout(function(){f.remove();},1400); save(); updatePts(); setTimeout(render,650); }
+      else { state.checks[key]={user:user,done:false}; var r=NIVELES[nivel||2].pts; state.puntos[user]=Math.max(0,(state.puntos[user]||0)-r); save(); render(); } }; });
+  }
+
+  function renderAsignadas(){
+    var admin=esAdmin(); state.asignadas=state.asignadas||[];
+    var h='<div class="sec-title">📌 Encargos</div>';
+    h+='<div class="card soft" style="background:var(--info-bg);border:none;font-size:13px;">'+(admin
+        ? 'Como admin, aquí asignas tareas puntuales a cada integrante (ideal de padres a hijos). Cada quien marca la suya al terminar y gana puntos.'
+        : 'Aquí ves las tareas que '+esc(adminUser())+' te asignó. Marca el círculo al terminarla para ganar tus puntos.')+'</div>';
+    if(admin){
+      h+='<div class="card soft"><label class="lbl">Asignar una tarea a alguien</label>'+
+        '<div class="field"><input id="asN" placeholder="Ej: Ordenar tu cuarto, sacar la basura…"></div>'+
+        '<div class="row" style="gap:8px;margin-bottom:8px;">'+
+          '<select id="asPara" class="smallinput grow">'+state.usuarios.map(function(u){return '<option value="'+esc(u)+'">'+esc(u)+'</option>';}).join("")+'</select>'+
+          '<select id="asNivel" class="smallinput grow"><option value="1">Ligera (+5)</option><option value="2" selected>Media (+10)</option><option value="3">Pesada (+20)</option></select>'+
+        '</div><button class="btn primary block" id="asAdd">Asignar tarea</button></div>';
+    }
+    var asigVis=admin?state.asignadas:state.asignadas.filter(function(a){return a.para===currentUser;});
+    if(asigVis.length===0) h+='<p class="empty">'+(admin?'Aún no has asignado tareas.':'No tienes tareas asignadas.')+'</p>';
+    else asigVis.slice().reverse().forEach(function(a){ var nv=NIVELES[a.nivel||2],mia=(a.para===currentUser),puede=admin||mia;
+      h+='<div class="card"><div class="row"><button class="check '+(a.hecha?"done":"")+'" data-asig="'+a.id+'" '+(puede?'':'disabled style="opacity:.4;"')+'>'+(a.hecha?"✓":"")+'</button><div class="grow"><div style="font-weight:600;'+(a.hecha?'text-decoration:line-through;color:var(--text3);':'')+'">'+esc(a.nombre)+'</div><div class="muted">Para <b>'+esc(a.para)+'</b> · '+nv.nombre+' · +'+nv.pts+' pts'+(a.hecha?' · hecha ✓':'')+'</div></div>'+(admin?'<button class="del" data-delasig="'+a.id+'">🗑️</button>':'')+'</div></div>'; });
+    content.innerHTML=h;
     if(admin){
       var asAdd=document.getElementById("asAdd"); if(asAdd) asAdd.onclick=function(){ var n=document.getElementById("asN").value.trim(),para=document.getElementById("asPara").value,nivel=+document.getElementById("asNivel").value; if(!n||!para){ setStatus("Escribe la tarea y elige a quién"); return; } state.asignadas.push({id:uid(),nombre:n,para:para,nivel:nivel,hecha:false,por:currentUser,fecha:new Date().toLocaleDateString("es-CL")}); save(); render(); };
       Array.prototype.forEach.call(content.querySelectorAll("[data-delasig]"),function(b){ b.onclick=function(){ state.asignadas=state.asignadas.filter(function(x){return x.id!==b.getAttribute("data-delasig");}); save(); render(); }; });
@@ -754,9 +825,6 @@
     Array.prototype.forEach.call(content.querySelectorAll("[data-asig]"),function(b){ b.onclick=function(){ var a=state.asignadas.filter(function(x){return x.id===b.getAttribute("data-asig");})[0]; if(!a)return; if(!(admin||a.para===currentUser))return; var g=NIVELES[a.nivel||2].pts;
       if(!a.hecha){ a.hecha=true; darPuntos(a.para,g); updatePts(); var f=document.createElement("div"); f.className="floatp"; f.textContent="+"+g; b.parentNode.style.position="relative"; b.parentNode.appendChild(f); setTimeout(function(){f.remove();},1400); save(); setTimeout(render,650); }
       else { a.hecha=false; state.puntos[a.para]=Math.max(0,(state.puntos[a.para]||0)-g); save(); render(); } }; });
-    Array.prototype.forEach.call(content.querySelectorAll("[data-check]"),function(b){ b.onclick=function(){ var parts=b.getAttribute("data-check").split("|"),key=parts[0],nivel=+parts[1],user=parts[2]; var cur=state.checks[key]&&state.checks[key].done;
-      if(!cur){ state.checks[key]={user:user,done:true}; var g=NIVELES[nivel||2].pts; darPuntos(user,g); var chip=b.parentNode; var f=document.createElement("div"); f.className="floatp"; f.textContent="+"+g; chip.style.position="relative"; chip.appendChild(f); setTimeout(function(){f.remove();},1400); save(); updatePts(); setTimeout(render,650); }
-      else { state.checks[key]={user:user,done:false}; var r=NIVELES[nivel||2].pts; state.puntos[user]=Math.max(0,(state.puntos[user]||0)-r); save(); render(); } }; });
   }
 
   function renderMascota(){
