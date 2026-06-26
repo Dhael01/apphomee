@@ -183,7 +183,29 @@
     box-shadow:0 5px 16px rgba(47,122,68,.34),inset 0 1px 0 rgba(255,255,255,.22);}
   html[data-escena="bosque"] .btn.primary:active{box-shadow:0 2px 8px rgba(47,122,68,.3);}
   html[data-escena] .card{border-radius:16px;box-shadow:0 3px 14px rgba(40,70,35,.10);}
-  html[data-escena] .nav button.on,html[data-escena] .seg button.on{box-shadow:inset 0 -2px 0 var(--info);}
+  html[data-escena] .seg button.on{box-shadow:inset 0 -2px 0 var(--info);}
+  /* Tallo secundario de las lianas */
+  html[data-escena="bosque"] .deco.bosque .st2{stroke:#4f9a4d;}
+  html[data-escena="bosque"][data-theme="dark"] .deco.bosque .st2{stroke:#5fa85c;}
+  /* Barra de navegación en temática bosque */
+  html[data-escena="bosque"] .nav{background:linear-gradient(180deg,#e9f3de,#fbfdf7);border-top:1px solid #cfe3bd;}
+  html[data-escena="bosque"] .nav button.on{background:var(--info-bg);border-radius:14px;box-shadow:inset 0 -2px 0 var(--info);}
+  html[data-escena="bosque"][data-theme="dark"] .nav{background:linear-gradient(180deg,#1d2718,#141b10);border-top:1px solid #2e4022;}
+  @media (prefers-color-scheme:dark){
+    html[data-escena="bosque"]:not([data-theme="light"]):not([data-theme="dark"]) .nav{background:linear-gradient(180deg,#1d2718,#141b10);border-top:1px solid #2e4022;}
+  }
+  /* Hadas */
+  #escenaDeco .hada .ala{fill:rgba(160,215,255,.5);stroke:rgba(120,190,255,.55);stroke-width:.5;}
+  #escenaDeco .hada .cuerpo{fill:#fff6c0;}
+  #escenaDeco .hada .brillo{fill:#ffe98a;transform-box:fill-box;transform-origin:center;animation:hadaTwinkle 2.4s ease-in-out infinite;}
+  #escenaDeco .hada-wrap{animation:hadaFloat 7s ease-in-out infinite;}
+  #escenaDeco .hada-wrap.h2{animation-duration:8.5s;animation-delay:-2.5s;}
+  #escenaDeco .hada-wrap.h3{animation-duration:6s;animation-delay:-1.2s;}
+  @keyframes hadaFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+  @keyframes hadaTwinkle{0%,100%{opacity:.3;transform:scale(.85);}50%{opacity:.7;transform:scale(1.2);}}
+  @media (prefers-reduced-motion:reduce){
+    #escenaDeco .hada-wrap,#escenaDeco .hada .brillo{animation:none;}
+  }
 </style>
 </head>
 <body>
@@ -283,16 +305,33 @@
   function escenaDecoHTML(id){
     var flor='<g class="f"><circle cx="0" cy="-7" r="5"/><circle cx="7" cy="-2" r="5"/><circle cx="4" cy="6" r="5"/><circle cx="-4" cy="6" r="5"/><circle cx="-7" cy="-2" r="5"/><circle cx="0" cy="0" r="3.6" class="fc"/></g>';
     if(id==="bosque"){
-      var liana='<path class="st" d="M30 -12 C44 48 16 88 30 140 C42 184 20 214 34 248" fill="none" stroke-width="6" stroke-linecap="round"/>'+
-        '<path class="lf" d="M30 52 q-28 -10 -38 7 q24 17 38 -7z"/>'+
-        '<path class="lf2" d="M30 108 q26 -10 38 7 q-24 17 -38 -7z"/>'+
-        '<path class="lf" d="M32 178 q-26 -9 -36 7 q22 15 36 -7z"/>'+
-        '<g transform="translate(18,150)">'+flor+'</g>'+
-        '<g transform="translate(42,32) scale(.8)">'+flor+'</g>';
-      return '<svg class="deco bosque" width="150" height="250" viewBox="0 0 80 250" style="top:0;left:0;">'+liana+'</svg>'+
-             '<svg class="deco bosque" width="150" height="250" viewBox="0 0 80 250" style="top:0;right:0;transform:scaleX(-1);">'+liana+'</svg>'+
-             '<svg class="deco bosque" width="120" height="150" viewBox="0 0 80 120" style="bottom:88px;right:0;transform:scaleX(-1);">'+
-               '<path class="lf" d="M40 120 q-30 -14 -40 4 q26 20 40 -4z"/><path class="lf2" d="M40 96 q28 -16 40 2 q-26 22 -40 -2z"/><g transform="translate(30,78)">'+flor+'</g></svg>';
+      var hada='<g class="hada"><ellipse class="ala" cx="-5" cy="-3" rx="6" ry="10" transform="rotate(-28 -5 -3)"/><ellipse class="ala" cx="5" cy="-3" rx="6" ry="10" transform="rotate(28 5 -3)"/><ellipse class="ala" cx="-5" cy="6" rx="4.5" ry="8" transform="rotate(-150 -5 6)"/><ellipse class="ala" cx="5" cy="6" rx="4.5" ry="8" transform="rotate(150 5 6)"/><circle class="brillo" cx="0" cy="0" r="10"/><circle class="cuerpo" cx="0" cy="0" r="3.2"/></g>';
+      // liana principal: tallo + ramita + hojas + flores
+      var liana='<path class="st" d="M30 -12 C44 48 16 88 30 140 C42 188 20 218 34 256" fill="none" stroke-width="6" stroke-linecap="round"/>'+
+        '<path class="st2" d="M30 16 C18 42 36 60 24 92" fill="none" stroke-width="3.4" stroke-linecap="round"/>'+
+        '<path class="lf" d="M30 50 q-28 -10 -38 7 q24 17 38 -7z"/>'+
+        '<path class="lf2" d="M30 92 q26 -10 38 7 q-24 17 -38 -7z"/>'+
+        '<path class="lf" d="M30 130 q-26 -9 -36 7 q22 15 36 -7z"/>'+
+        '<path class="lf2" d="M32 180 q26 -10 36 7 q-22 16 -36 -7z"/>'+
+        '<path class="lf" d="M30 220 q-24 -8 -34 7 q20 14 34 -7z"/>'+
+        '<g transform="translate(16,150)">'+flor+'</g>'+
+        '<g transform="translate(44,30) scale(.8)">'+flor+'</g>'+
+        '<g transform="translate(20,205) scale(.9)">'+flor+'</g>';
+      // liana central más corta
+      var lianaC='<svg class="deco bosque" width="70" height="180" viewBox="0 0 60 180" style="top:0;left:50%;margin-left:-35px;">'+
+        '<path class="st" d="M30 -10 C22 40 38 70 30 118 C26 145 32 162 30 182" fill="none" stroke-width="4.5" stroke-linecap="round"/>'+
+        '<path class="lf" d="M30 48 q-22 -8 -30 6 q19 13 30 -6z"/><path class="lf2" d="M30 90 q22 -9 30 6 q-19 14 -30 -6z"/>'+
+        '<g transform="translate(18,128) scale(.85)">'+flor+'</g></svg>';
+      // cluster inferior reutilizable
+      var clusterAbajo='<path class="lf" d="M40 120 q-30 -14 -40 4 q26 20 40 -4z"/><path class="lf2" d="M40 94 q28 -16 40 2 q-26 22 -40 -2z"/><g transform="translate(30,76)">'+flor+'</g>';
+      return '<svg class="deco bosque" width="150" height="260" viewBox="0 0 80 260" style="top:0;left:0;">'+liana+'</svg>'+
+             '<svg class="deco bosque" width="150" height="260" viewBox="0 0 80 260" style="top:0;right:0;transform:scaleX(-1);">'+liana+'</svg>'+
+             lianaC+
+             '<svg class="deco bosque" width="120" height="150" viewBox="0 0 80 120" style="bottom:88px;right:0;transform:scaleX(-1);">'+clusterAbajo+'</svg>'+
+             '<svg class="deco bosque" width="110" height="140" viewBox="0 0 80 120" style="bottom:96px;left:0;">'+clusterAbajo+'</svg>'+
+             '<svg class="deco bosque hada-wrap" width="46" height="46" viewBox="-23 -23 46 46" style="top:24%;left:22%;">'+hada+'</svg>'+
+             '<svg class="deco bosque hada-wrap h2" width="38" height="38" viewBox="-19 -19 38 38" style="top:46%;right:16%;">'+hada+'</svg>'+
+             '<svg class="deco bosque hada-wrap h3" width="30" height="30" viewBox="-15 -15 30 30" style="top:62%;left:30%;">'+hada+'</svg>';
     }
     return "";
   }
