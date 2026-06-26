@@ -156,9 +156,9 @@
   ];
   var MENU_IDS={integrantes:1,cierre:1,ajustes:1}; // estas van en el menú ⋯ de arriba, no en la barra inferior
 
-  var DEFAULT={adminId:null,plan:"free",planExpira:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
+  var DEFAULT={adminId:null,plan:"free",planExpira:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],transporte:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],retos:{},topePesada:3,checks:{},puntos:{},mascota:{}};
   var state=JSON.parse(JSON.stringify(DEFAULT));
-  var currentUser=null, activeTab="integrantes", subGastos="cuentas";
+  var currentUser=null, activeTab="integrantes", subGastos="cuentas", retoPctSel=20;
   var sb=null, hogar=null, conectado=false, guardando=false, ultimoGuardado="";
   // id único de ESTE dispositivo: sirve para ignorar el "eco" de mis propios
   // guardados en el realtime (si no, mis cambios recién hechos se revierten solos)
@@ -816,14 +816,18 @@
   }
 
   function renderGastos(){
-    // muestra el sub-apartado elegido y le antepone el interruptor Cuentas / Despensa
-    if(subGastos==="despensa") renderDespensa(); else renderCuentas();
+    // muestra el sub-apartado elegido y le antepone el interruptor Cuentas / Despensa / Transporte
+    if(subGastos==="despensa") renderDespensa();
+    else if(subGastos==="transporte") renderTransporte();
+    else renderCuentas();
     var seg='<div class="seg" style="display:flex;width:100%;margin-bottom:12px;">'+
       '<button id="sgCuentas" class="'+(subGastos==="cuentas"?"on":"")+'" style="flex:1;">💵 Cuentas</button>'+
-      '<button id="sgDespensa" class="'+(subGastos==="despensa"?"on":"")+'" style="flex:1;">🛒 Despensa</button></div>';
+      '<button id="sgDespensa" class="'+(subGastos==="despensa"?"on":"")+'" style="flex:1;">🛒 Despensa</button>'+
+      '<button id="sgTransporte" class="'+(subGastos==="transporte"?"on":"")+'" style="flex:1;">🚌 Transporte</button></div>';
     content.insertAdjacentHTML("afterbegin",seg);
     document.getElementById("sgCuentas").onclick=function(){ subGastos="cuentas"; render(); };
     document.getElementById("sgDespensa").onclick=function(){ subGastos="despensa"; render(); };
+    document.getElementById("sgTransporte").onclick=function(){ subGastos="transporte"; render(); };
   }
 
   function renderCuentas(){
@@ -878,6 +882,39 @@
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.despensa=state.despensa.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
   }
 
+  // Medios de transporte disponibles (emoji + etiqueta)
+  var MEDIOS_TRANSP=[
+    {v:"micro",ic:"🚌",t:"Micro / Bus"},
+    {v:"metro",ic:"🚇",t:"Metro / Tren"},
+    {v:"auto",ic:"⛽",t:"Auto / Bencina"},
+    {v:"taxi",ic:"🚕",t:"Taxi / App"},
+    {v:"moto",ic:"🛵",t:"Moto"},
+    {v:"bici",ic:"🚲",t:"Bici"},
+    {v:"otro",ic:"🚶",t:"A pie / Otro"}
+  ];
+  function medioTransp(v){ for(var i=0;i<MEDIOS_TRANSP.length;i++){ if(MEDIOS_TRANSP[i].v===v) return MEDIOS_TRANSP[i]; } return MEDIOS_TRANSP[MEDIOS_TRANSP.length-1]; }
+
+  function renderTransporte(){
+    if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Transporte es Premium","Lleva el gasto mensual aproximado de transporte de cada integrante (micro, bencina, metro…). Desbloquéalo con Premium."); wireGoPrem(); return; }
+    state.transporte=state.transporte||[];
+    var items=state.transporte, total=items.reduce(function(s,i){return s+(+i.monto||0);},0);
+    var pp={}; state.usuarios.forEach(function(u){pp[u]=0;}); items.forEach(function(it){ if(pp[it.autor]!==undefined)pp[it.autor]+=(+it.monto||0); });
+    var h='<div class="card soft" style="background:var(--info-bg);border:none;font-size:13px;">🚌 Anota cuánto gastas <b>al mes</b> en transporte (aprox). Es personal de cada uno y <b>no se reparte</b> entre el hogar.</div>';
+    h+='<div class="metrics"><div class="metric"><div class="l">Transporte del hogar</div><div class="v">'+PESO(total)+'</div></div><div class="metric"><div class="l">El tuyo</div><div class="v" style="color:var(--info);">'+PESO(pp[currentUser]||0)+'</div></div></div>';
+    if(state.usuarios.length>0){ h+='<div class="card soft"><div style="font-weight:600;margin-bottom:8px;">👥 Gasto mensual por persona</div><div class="grid-auto">'; state.usuarios.forEach(function(u){ var c=colorFor(u); h+='<div class="metric" style="padding:8px 10px;"><div class="muted" style="color:var(--'+c+');">'+esc(u)+'</div><div style="font-weight:600;">'+PESO(pp[u]||0)+'</div></div>'; }); h+='</div></div>'; }
+    var opts=MEDIOS_TRANSP.map(function(m){return '<option value="'+m.v+'">'+m.ic+' '+m.t+'</option>';}).join("");
+    h+='<div class="card soft"><div class="field"><label class="lbl">Medio de transporte</label><select id="trMedio" class="grow">'+opts+'</select></div><div class="field"><label class="lbl">Gasto mensual aprox</label><input id="trM" type="number" inputmode="numeric" placeholder="Ej: 30000"></div><button class="btn primary block" id="trAdd">Registrar (como '+esc(currentUser||"—")+')</button></div>';
+    var mios=items.filter(function(it){return it.autor===currentUser;});
+    if(mios.length===0) h+='<p class="empty">Aún no registras tu transporte de este mes.</p>';
+    else { h+='<p class="muted" style="margin:14px 0 6px;">Tu transporte</p>';
+      mios.slice().reverse().forEach(function(it){ var md=medioTransp(it.medio); h+='<div class="card"><div class="row"><span style="font-size:18px;">'+md.ic+'</span><div class="grow"><div style="font-weight:600;">'+md.t+'</div><div class="muted">'+esc(it.fecha||"")+' · al mes</div></div><div style="font-weight:600;">'+PESO(it.monto)+'</div><button class="del" data-del="'+it.id+'">🗑️</button></div></div>'; }); }
+    content.innerHTML=h;
+    wireGoPrem();
+    var trAddBtn=document.getElementById("trAdd");
+    if(trAddBtn) trAddBtn.onclick=function(){ var med=document.getElementById("trMedio").value,m=+document.getElementById("trM").value; if(!m)return; state.transporte.push({id:uid(),medio:med,monto:m,autor:currentUser,fecha:new Date().toLocaleDateString("es-CL")}); save(); render(); };
+    Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.transporte=state.transporte.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
+  }
+
   function renderMetas(){
     if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Ahorro y metas es Premium","Crea un fondo de ahorro común con validación y metas familiares con barra de progreso. Desbloquéalo con Premium."); wireGoPrem(); return; }
     var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
@@ -886,6 +923,25 @@
     var pendTotal=pendientes.reduce(function(s,a){return s+(+a.monto||0);},0);
     var pp={}; state.usuarios.forEach(function(u){pp[u]=0;}); aprobados.forEach(function(a){ if(pp[a.autor]!==undefined)pp[a.autor]+=(+a.monto||0); });
     var h='<div class="card" style="background:var(--success-bg);border:none;"><div class="row"><span style="font-size:28px;">🐷</span><div class="grow"><div style="font-size:13px;color:var(--success);">Fondo de ahorro común (validado)</div><div style="font-size:24px;font-weight:700;color:var(--success);">'+PESO(ahorroTotal)+'</div></div>'+(pendTotal>0?'<div style="text-align:right;"><div class="muted" style="color:var(--warning);">Por validar</div><div style="font-weight:600;color:var(--warning);">'+PESO(pendTotal)+'</div></div>':'')+'</div></div>';
+    // 💡 Reto de ahorro del mes (personal: según lo que le queda libre a currentUser)
+    state.retos=state.retos||{};
+    var mesNomR=new Date().toLocaleDateString("es-CL",{month:"long"}); mesNomR=mesNomR.charAt(0).toUpperCase()+mesNomR.slice(1);
+    var retoKey=new Date().toISOString().slice(0,7)+"|"+(currentUser||"");
+    var miRes=calcularAportes().res[currentUser], retoHecho=state.retos[retoKey];
+    h+='<div class="sec-title">💡 ¿Cuánto puedo ahorrar este mes?</div>';
+    if(retoHecho){
+      h+='<div class="card" style="background:var(--success-bg);border:none;"><div class="row"><span style="font-size:26px;">🎉</span><div class="grow"><div style="font-weight:600;color:var(--success);">¡Lograste tu reto de '+esc(mesNomR)+'!</div><div class="muted">Apartaste '+PESO(retoHecho.monto)+' ('+retoHecho.pct+'% de lo que te queda libre).</div></div><button class="btn" id="retoUndo" style="flex:none;">Deshacer</button></div></div>';
+    } else if(!miRes){
+      h+='<div class="card soft"><p class="muted" style="margin:0;">Ingresa tu sueldo en <b>Aporte</b> y te diremos cuánto puedes ahorrar este mes.</p></div>';
+    } else {
+      var miQueda=Math.max(0, miRes.queda||0), sugerido=Math.round(miQueda*retoPctSel/100);
+      h+='<div class="card soft"><p class="muted" style="margin:0 0 10px;">Después de tus aportes te queda libre <b style="color:var(--success);">'+PESO(miQueda)+'</b>. Elige cuánto apartar:</p>';
+      h+='<div class="seg" style="display:flex;gap:6px;margin-bottom:10px;">'+[10,20,30].map(function(p){return '<button class="'+(retoPctSel===p?"on":"")+'" data-retopct="'+p+'" style="flex:1;">'+p+'%</button>';}).join("")+'</div>';
+      if(miQueda<=0) h+='<div class="card" style="background:var(--warning-bg);color:var(--warning);border:none;margin:0;">Este mes no te queda excedente para ahorrar. ¡Cuando lo tengas, vuelve por tus puntos!</div>';
+      else { h+='<div style="text-align:center;margin:6px 0 12px;"><div class="muted">Puedes ahorrar este mes</div><div style="font-size:26px;font-weight:800;color:var(--success);">'+PESO(sugerido)+'</div></div>';
+        h+='<button class="btn primary block" id="retoDone">✅ Lo aparté este mes (+puntos)</button>'; }
+      h+='</div>';
+    }
     h+='<div class="card soft"><label class="lbl">Aportar al ahorro (como '+esc(currentUser||"—")+')</label><div class="field"><span class="muted">Monto</span><input id="aM" type="number" inputmode="numeric" placeholder="Ej: 5000"></div><div class="field"><span class="muted">N° operación / folio</span><input id="aF" placeholder="Comprobante"></div><button class="btn primary block" id="aAdd">Enviar aporte</button><p class="muted" style="margin:6px 0 0;">Queda pendiente hasta que '+esc(adminUser())+' lo valide.</p></div>';
     if(pendientes.length>0){ h+='<div class="card" style="background:var(--warning-bg);border:none;"><div style="font-weight:600;color:var(--warning);margin-bottom:8px;">⏳ Por validar ('+pendientes.length+')</div>';
       pendientes.slice().reverse().forEach(function(a){ h+='<div class="card"><div style="font-weight:600;">'+PESO(a.monto)+' · '+esc(a.autor)+'</div><div class="muted" style="margin-bottom:6px;">'+esc(a.fecha||"")+(a.folio?" · folio "+esc(a.folio):" · sin folio")+'</div>'+(esAdmin()?'<div class="row"><button class="btn ok grow" data-ok="'+a.id+'">✓ Aprobar</button><button class="btn no grow" data-no="'+a.id+'">✕ Rechazar</button></div>':'<span class="pill" style="background:var(--warning-bg);color:var(--warning);">Esperando a '+esc(adminUser())+'</span>')+'</div>'; }); h+='</div>'; }
@@ -900,6 +956,16 @@
     Array.prototype.forEach.call(content.querySelectorAll("[data-ok]"),function(b){ b.onclick=function(){ var a=state.ahorros.filter(function(x){return x.id===b.getAttribute("data-ok");})[0]; if(a){a.estado="aprobado";a.validadoPor=currentUser; darPuntos(a.autor,Math.max(5,Math.min(50,Math.round(a.monto/1000))));} save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-no]"),function(b){ b.onclick=function(){ state.ahorros=state.ahorros.filter(function(x){return x.id!==b.getAttribute("data-no");}); save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-delm]"),function(b){ b.onclick=function(){ state.metas=state.metas.filter(function(x){return x.id!==b.getAttribute("data-delm");}); save(); render(); }; });
+    // Reto de ahorro del mes
+    Array.prototype.forEach.call(content.querySelectorAll("[data-retopct]"),function(b){ b.onclick=function(){ retoPctSel=+b.getAttribute("data-retopct"); render(); }; });
+    var retoDoneBtn=document.getElementById("retoDone");
+    if(retoDoneBtn) retoDoneBtn.onclick=function(){ var r2=calcularAportes().res[currentUser]; if(!r2)return; var q=Math.max(0,r2.queda||0),monto=Math.round(q*retoPctSel/100); if(monto<=0)return;
+      var key=new Date().toISOString().slice(0,7)+"|"+currentUser; state.retos[key]={pct:retoPctSel,monto:monto,fecha:new Date().toLocaleDateString("es-CL")};
+      var g=Math.max(10,Math.min(60,Math.round(monto/2000))); darPuntos(currentUser,g); updatePts();
+      var f=document.createElement("div"); f.className="floatp"; f.textContent="+"+g; retoDoneBtn.style.position="relative"; retoDoneBtn.appendChild(f); setTimeout(function(){f.remove();},1400);
+      save(); setTimeout(render,650); };
+    var retoUndoBtn=document.getElementById("retoUndo");
+    if(retoUndoBtn) retoUndoBtn.onclick=function(){ var key=new Date().toISOString().slice(0,7)+"|"+currentUser,r=state.retos[key]; if(r){ var g=Math.max(10,Math.min(60,Math.round(r.monto/2000))); state.puntos[currentUser]=Math.max(0,(state.puntos[currentUser]||0)-g); delete state.retos[key]; } save(); render(); };
   }
 
   function renderQuehaceres(){
