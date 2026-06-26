@@ -1142,7 +1142,7 @@
     var mesLabel=mesAnio.charAt(0).toUpperCase()+mesAnio.slice(1);
 
     var L=[];
-    L.push("RESUMEN MENSUAL — NUESTRO HOGAR");
+    L.push("RESUMEN MENSUAL — "+(((familiaActual&&familiaActual.name)||state.nombre||"nuestro hogar").toUpperCase()));
     L.push("Mes: "+mesLabel);
     L.push("");
     L.push("GASTOS DEL HOGAR");
@@ -1243,7 +1243,8 @@
   function descargarCSV(){
     var now=new Date();
     var mesAnio=now.toLocaleDateString("es-CL",{month:"long",year:"numeric"});
-    var filename="NuestroHogar_"+mesAnio.replace(/\s+/g,"_")+".csv";
+    var nombreHogar=((familiaActual&&familiaActual.name)||state.nombre||"hogar").replace(/[^\wáéíóúñ ]/gi,"").trim().replace(/\s+/g,"_")||"hogar";
+    var filename=nombreHogar+"_"+mesAnio.replace(/\s+/g,"_")+".csv";
     // BOM para que Excel respete los acentos
     var txt="\uFEFF"+generarResumenTexto(",");
     var blob=new Blob([txt],{type:"text/csv;charset=utf-8;"});
