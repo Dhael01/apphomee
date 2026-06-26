@@ -156,7 +156,7 @@
   ];
   var MENU_IDS={integrantes:1,cierre:1,ajustes:1}; // estas van en el menú ⋯ de arriba, no en la barra inferior
 
-  var DEFAULT={adminId:null,plan:"free",planExpira:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],transporte:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],retos:{},topePesada:3,checks:{},puntos:{},mascota:{}};
+  var DEFAULT={adminId:null,plan:"free",planExpira:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],transporte:[],personales:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],retos:{},topePesada:3,checks:{},puntos:{},mascota:{}};
   var state=JSON.parse(JSON.stringify(DEFAULT));
   var currentUser=null, activeTab="integrantes", subGastos="cuentas", retoPctSel=20;
   var sb=null, hogar=null, conectado=false, guardando=false, ultimoGuardado="";
@@ -819,15 +819,18 @@
     // muestra el sub-apartado elegido y le antepone el interruptor Cuentas / Despensa / Transporte
     if(subGastos==="despensa") renderDespensa();
     else if(subGastos==="transporte") renderTransporte();
+    else if(subGastos==="personales") renderPersonales();
     else renderCuentas();
-    var seg='<div class="seg" style="display:flex;width:100%;margin-bottom:12px;">'+
+    var seg='<div class="seg" style="display:flex;width:100%;margin-bottom:12px;font-size:13px;">'+
       '<button id="sgCuentas" class="'+(subGastos==="cuentas"?"on":"")+'" style="flex:1;">💵 Cuentas</button>'+
       '<button id="sgDespensa" class="'+(subGastos==="despensa"?"on":"")+'" style="flex:1;">🛒 Despensa</button>'+
-      '<button id="sgTransporte" class="'+(subGastos==="transporte"?"on":"")+'" style="flex:1;">🚌 Transporte</button></div>';
+      '<button id="sgTransporte" class="'+(subGastos==="transporte"?"on":"")+'" style="flex:1;">🚌 Transporte</button>'+
+      '<button id="sgPersonales" class="'+(subGastos==="personales"?"on":"")+'" style="flex:1;">💳 Personal</button></div>';
     content.insertAdjacentHTML("afterbegin",seg);
     document.getElementById("sgCuentas").onclick=function(){ subGastos="cuentas"; render(); };
     document.getElementById("sgDespensa").onclick=function(){ subGastos="despensa"; render(); };
     document.getElementById("sgTransporte").onclick=function(){ subGastos="transporte"; render(); };
+    document.getElementById("sgPersonales").onclick=function(){ subGastos="personales"; render(); };
   }
 
   function renderCuentas(){
@@ -915,6 +918,23 @@
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.transporte=state.transporte.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
   }
 
+  function renderPersonales(){
+    if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Gastos personales es Premium","Anota tus gastos propios (Netflix, teléfono, gym…) sin mezclarlos con los del hogar. Desbloquéalo con Premium."); wireGoPrem(); return; }
+    state.personales=state.personales||[];
+    var items=state.personales.filter(function(it){return it.autor===currentUser;});
+    var total=items.reduce(function(s,i){return s+(+i.monto||0);},0);
+    var h='<div class="card soft" style="background:var(--info-bg);border:none;font-size:13px;">💳 Tus gastos personales (Netflix, teléfono, gym…). Son <b>solo tuyos</b>, no se reparten ni los ven los demás.</div>';
+    h+='<div class="metrics"><div class="metric"><div class="l">Tu total mensual</div><div class="v" style="color:var(--info);">'+PESO(total)+'</div></div><div class="metric"><div class="l">Gastos</div><div class="v">'+items.length+'</div></div></div>';
+    h+='<div class="card soft"><div class="field"><label class="lbl">Gasto personal</label><input id="peN" placeholder="Netflix, teléfono, gym…"></div><div class="field"><label class="lbl">Monto mensual</label><input id="peM" type="number" inputmode="numeric" placeholder="0"></div><button class="btn primary block" id="peAdd">Agregar gasto</button></div>';
+    if(items.length===0) h+='<p class="empty">Aún no anotas gastos personales.</p>';
+    else items.slice().reverse().forEach(function(it){ h+='<div class="card"><div class="row"><span style="font-size:18px;">💳</span><div class="grow"><div style="font-weight:600;">'+esc(it.nombre)+'</div><div class="muted">'+esc(it.fecha||"")+' · al mes</div></div><div style="font-weight:600;">'+PESO(it.monto)+'</div><button class="del" data-del="'+it.id+'">🗑️</button></div></div>'; });
+    content.innerHTML=h;
+    wireGoPrem();
+    var peAddBtn=document.getElementById("peAdd");
+    if(peAddBtn) peAddBtn.onclick=function(){ var n=document.getElementById("peN").value.trim(),m=+document.getElementById("peM").value; if(!n||!m)return; state.personales.push({id:uid(),nombre:n,monto:m,autor:currentUser,fecha:new Date().toLocaleDateString("es-CL")}); save(); render(); };
+    Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.personales=state.personales.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
+  }
+
   function renderMetas(){
     if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Ahorro y metas es Premium","Crea un fondo de ahorro común con validación y metas familiares con barra de progreso. Desbloquéalo con Premium."); wireGoPrem(); return; }
     var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
@@ -971,15 +991,17 @@
   function renderQuehaceres(){
     var tareas=state.tareas, p=planSemana(state.rotSemana), admin=esAdmin();
     state.asignadas=state.asignadas||[];
+    var hoyIdx=(new Date().getDay()+6)%7; // 0=Lun … 6=Dom (solo se valida el día de hoy)
     var maxCarga=Math.max.apply(null,[1].concat(Object.keys(p.carga).map(function(k){return p.carga[k];})));
-    var h='<div class="card soft"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><div class="muted">Plan semanal</div><div style="font-size:16px;font-weight:600;">📅 Semana '+(state.rotSemana+1)+'</div></div><div class="row" style="gap:6px;"><span class="muted">Tope:</span><select id="tope" class="smallinput">'+[2,3,4].map(function(v){return '<option value="'+v+'" '+(state.topePesada===v?"selected":"")+'>'+v+'</option>';}).join("")+'</select><button class="btn" id="rPrev">‹</button><button class="btn" id="rNext">›</button></div></div><p class="muted" style="margin:6px 0 0;">Marca ✓ al terminar: ganas puntos y la mascota se anima.</p></div>';
+    var h='<div class="card soft"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><div class="muted">Plan semanal</div><div style="font-size:16px;font-weight:600;">📅 Semana '+(state.rotSemana+1)+'</div></div><div class="row" style="gap:6px;"><span class="muted">Tope:</span><select id="tope" class="smallinput">'+[2,3,4].map(function(v){return '<option value="'+v+'" '+(state.topePesada===v?"selected":"")+'>'+v+'</option>';}).join("")+'</select><button class="btn" id="rPrev">‹</button><button class="btn" id="rNext">›</button></div></div><p class="muted" style="margin:6px 0 0;">Solo puedes marcar lo de <b>hoy</b> ('+DIAS[hoyIdx]+'). Al terminar ganas puntos y la mascota se anima.</p></div>';
     if(p.avisoTope) h+='<div class="card" style="background:var(--warning-bg);color:var(--warning);border:none;font-size:13px;">⚠️ Más turnos pesados que el tope cubre. Se repartió lo más parejo posible.</div>';
     if(tareas.length===0) h+='<p class="empty">Define quehaceres con frecuencia y nivel.</p>';
     else { h+='<div class="cal">';
-      for(var d=0;d<7;d++){ h+='<div class="day"><div class="dayn">'+DIAS[d]+'</div>';
+      for(var d=0;d<7;d++){ var esHoyD=(d===hoyIdx);
+        h+='<div class="day"'+(esHoyD?' style="outline:2px solid var(--primary);outline-offset:-2px;border-radius:10px;"':'')+'><div class="dayn"'+(esHoyD?' style="color:var(--primary);font-weight:700;"':'')+'>'+DIAS[d]+(esHoyD?' • hoy':'')+'</div>';
         if(p.porDia[d].length===0) h+='<div class="muted" style="text-align:center;">—</div>';
         else p.porDia[d].forEach(function(it){ var c=colorFor(it.user),key=state.rotSemana+"-"+it.tarea.id+"-"+d,done=state.checks[key]&&state.checks[key].done;
-          h+='<div class="chip" style="background:var(--'+c+'-bg);color:var(--'+c+');'+(done?"opacity:.55;":"")+'"><button class="check '+(done?"done":"")+'" data-check="'+key+'|'+(it.tarea.nivel||2)+'|'+esc(it.user)+'">'+(done?"✓":"")+'</button><span style="'+(done?"text-decoration:line-through;":"")+'">'+esc(it.tarea.nombre)+'<br>'+esc(it.user)+'</span></div>'; });
+          h+='<div class="chip" style="background:var(--'+c+'-bg);color:var(--'+c+');'+(done?"opacity:.55;":"")+'"><button class="check '+(done?"done":"")+'" '+(esHoyD?'data-check="'+key+'|'+(it.tarea.nivel||2)+'|'+esc(it.user)+'"':'disabled title="Solo se marca el día de hoy" style="opacity:.4;cursor:not-allowed;"')+'>'+(done?"✓":"")+'</button><span style="'+(done?"text-decoration:line-through;":"")+'">'+esc(it.tarea.nombre)+'<br>'+esc(it.user)+'</span></div>'; });
         h+='</div>'; }
       h+='</div><div class="grid-auto" style="margin-top:12px;">';
       state.usuarios.forEach(function(u){ var c=colorFor(u),mins=p.carga[u],horas=mins>=60?(Math.round(mins/6)/10)+" h":mins+" min";
