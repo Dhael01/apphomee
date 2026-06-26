@@ -341,9 +341,9 @@
   function escenaHadasHTML(id){
     if(id!=="bosque") return "";
     var hada='<g class="hada"><ellipse class="ala" cx="-5" cy="-3" rx="6" ry="10" transform="rotate(-28 -5 -3)"/><ellipse class="ala" cx="5" cy="-3" rx="6" ry="10" transform="rotate(28 5 -3)"/><ellipse class="ala" cx="-5" cy="6" rx="4.5" ry="8" transform="rotate(-150 -5 6)"/><ellipse class="ala" cx="5" cy="6" rx="4.5" ry="8" transform="rotate(150 5 6)"/><circle class="brillo" cx="0" cy="0" r="10"/><circle class="cuerpo" cx="0" cy="0" r="3.2"/></g>';
-    return '<svg class="deco bosque hada-wrap" width="46" height="46" viewBox="-23 -23 46 46" style="top:22%;left:14%;">'+hada+'</svg>'+
-           '<svg class="deco bosque hada-wrap h2" width="38" height="38" viewBox="-19 -19 38 38" style="top:42%;right:12%;">'+hada+'</svg>'+
-           '<svg class="deco bosque hada-wrap h3" width="30" height="30" viewBox="-15 -15 30 30" style="top:60%;left:24%;">'+hada+'</svg>';
+    return '<svg class="deco bosque hada-wrap" width="46" height="46" viewBox="-23 -23 46 46" style="top:9%;left:4%;">'+hada+'</svg>'+
+           '<svg class="deco bosque hada-wrap h2" width="38" height="38" viewBox="-19 -19 38 38" style="top:6%;right:4%;">'+hada+'</svg>'+
+           '<svg class="deco bosque hada-wrap h3" width="30" height="30" viewBox="-15 -15 30 30" style="bottom:15%;right:7%;">'+hada+'</svg>';
   }
   function aplicarEscena(){
     var el=document.documentElement, e=getEscena(), on=!!(e&&ESCENAS[e]&&esPremium());
