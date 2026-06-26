@@ -1113,10 +1113,10 @@
 
     h+='<div class="card soft" style="margin-top:8px;">';
     h+='<div style="font-weight:600;margin-bottom:6px;">📊 Resumen del mes</div>';
-    h+='<p class="muted" style="margin:0 0 10px;">Mira el resumen completo en pantalla: cuentas, despensa, ahorro y saldo libre. Puedes copiarlo y pegarlo donde quieras (WhatsApp, notas, Excel).</p>';
+    h+='<p class="muted" style="margin:0 0 10px;">Mira el resumen en pantalla, cópialo para pegarlo donde quieras (WhatsApp, notas) o descarga un reporte bonito con gráfico para guardar o imprimir.</p>';
     h+='<button class="btn primary block" id="verResumenBtn" style="margin-bottom:8px;">👁️ Ver resumen en pantalla</button>';
     h+='<button class="btn ok block" id="copiarBtn" style="margin-bottom:8px;">📋 Copiar resumen</button>';
-    h+='<button class="btn block" id="csvBtn">⬇️ Descargar como CSV (Excel)</button>';
+    h+='<button class="btn block" id="repBtn">📄 Descargar reporte (con gráfico)</button>';
     h+='<div id="resumenBox" style="display:none;margin-top:10px;"></div>';
     h+='</div>';
 
@@ -1125,8 +1125,8 @@
     if(vr) vr.onclick=verResumenPantalla;
     var cp=document.getElementById("copiarBtn");
     if(cp) cp.onclick=copiarResumen;
-    var cv=document.getElementById("csvBtn");
-    if(cv) cv.onclick=descargarCSV;
+    var cv=document.getElementById("repBtn");
+    if(cv) cv.onclick=descargarReporte;
   }
 
   // ====== RESUMEN EN TEXTO (base para mostrar/copiar/CSV) ======
@@ -1240,26 +1240,133 @@
     }
   }
 
-  function descargarCSV(){
+  // ====== REPORTE HTML (descargable, con gráfico y colores) ======
+  // Paleta del reporte (economía del hogar): verde=ahorro/prosperidad, dorado=gastos/dinero, crema=hogar.
+  var REP={ ink:"#2C322E", muted:"#7E887F", cream:"#F6F1E7", surface:"#FFFFFF", line:"#E8E1D3",
+            green:"#1d9e75", greenSoft:"#E4F3EC", gold:"#E0992A", goldSoft:"#FBEFD6",
+            teal:"#2C8C8C", tealSoft:"#E1F0F0", rose:"#D98AA6" };
+
+  // Gráfico de barras en SVG con colores fijos (para el archivo descargable, sin variables CSS).
+  function chartReporte(calc, ahorroPP){
+    var us=state.usuarios;
+    if(us.length===0) return '';
+    var svgW=Math.max(320, us.length*120+70), svgH=210;
+    var pt={top:18,bottom:42,left:56,right:14};
+    var cW=svgW-pt.left-pt.right, cH=svgH-pt.top-pt.bottom;
+    var maxVal=1;
+    us.forEach(function(u){ var r=calc.res[u]||{}; maxVal=Math.max(maxVal,r.aporte||0,ahorroPP[u]||0); });
+    var groupW=cW/us.length, barW=Math.min(26,groupW*0.34), baseY=pt.top+cH;
+    var svg='<svg width="100%" viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg" style="max-width:560px;">';
+    for(var i=0;i<=3;i++){
+      var gy=pt.top+cH-(cH*i/3);
+      svg+='<line x1="'+pt.left+'" y1="'+gy+'" x2="'+(svgW-pt.right)+'" y2="'+gy+'" stroke="'+REP.line+'" stroke-width="1"/>';
+      svg+='<text x="'+(pt.left-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="10" fill="'+REP.muted+'">'+abbrevPeso(maxVal*i/3)+'</text>';
+    }
+    us.forEach(function(u,i){
+      var r=calc.res[u]||{}, gasto=r.aporte||0, ahorro=ahorroPP[u]||0;
+      var cx=pt.left+i*groupW+groupW/2;
+      var gH=(gasto/maxVal)*cH, aH=(ahorro/maxVal)*cH;
+      svg+='<rect x="'+(cx-barW-3)+'" y="'+(baseY-gH)+'" width="'+barW+'" height="'+Math.max(2,gH)+'" fill="'+REP.gold+'" rx="3"/>';
+      svg+='<rect x="'+(cx+3)+'" y="'+(baseY-aH)+'" width="'+barW+'" height="'+Math.max(2,aH)+'" fill="'+REP.green+'" rx="3"/>';
+      var dn=u.length>9?u.slice(0,9)+'…':u;
+      svg+='<text x="'+cx+'" y="'+(baseY+20)+'" text-anchor="middle" font-size="11" font-weight="600" fill="'+REP.ink+'">'+esc(dn)+'</text>';
+    });
+    svg+='<line x1="'+pt.left+'" y1="'+baseY+'" x2="'+(svgW-pt.right)+'" y2="'+baseY+'" stroke="'+REP.muted+'" stroke-width="1.5"/>';
+    svg+='</svg>';
+    return svg;
+  }
+
+  function generarReporteHTML(){
+    var calc=calcularAportes();
+    var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
+    var ahorroTotal=aprobados.reduce(function(s,a){return s+(+a.monto||0);},0);
+    var ahorroPP={}; state.usuarios.forEach(function(u){ahorroPP[u]=0;});
+    aprobados.forEach(function(a){ if(ahorroPP[a.autor]!==undefined) ahorroPP[a.autor]+=(+a.monto||0); });
+    var now=new Date();
+    var mesAnio=now.toLocaleDateString("es-CL",{month:"long",year:"numeric"});
+    var mesLabel=mesAnio.charAt(0).toUpperCase()+mesAnio.slice(1);
+    var nombreHogar=(familiaActual&&familiaActual.name)||state.nombre||"Nuestro hogar";
+    var fechaGen=now.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"});
+
+    function metric(label, val, color){
+      return '<div style="flex:1;min-width:120px;background:'+REP.surface+';border:1px solid '+REP.line+';border-radius:14px;padding:14px 16px;">'+
+        '<div style="font-size:12px;color:'+REP.muted+';margin-bottom:4px;">'+label+'</div>'+
+        '<div style="font-size:20px;font-weight:700;color:'+(color||REP.ink)+';">'+val+'</div></div>';
+    }
+
+    var filas=state.usuarios.map(function(u){
+      var r=calc.res[u]||{sueldo:0,aporte:0,queda:0};
+      return '<tr>'+
+        '<td style="padding:11px 12px;font-weight:600;color:'+REP.ink+';border-bottom:1px solid '+REP.line+';">'+esc(u)+'</td>'+
+        '<td style="padding:11px 12px;text-align:right;color:'+REP.ink+';border-bottom:1px solid '+REP.line+';">'+PESO(r.sueldo||0)+'</td>'+
+        '<td style="padding:11px 12px;text-align:right;color:'+REP.gold+';font-weight:600;border-bottom:1px solid '+REP.line+';">'+PESO(r.aporte||0)+'</td>'+
+        '<td style="padding:11px 12px;text-align:right;color:'+REP.green+';font-weight:600;border-bottom:1px solid '+REP.line+';">'+PESO(ahorroPP[u]||0)+'</td>'+
+        '<td style="padding:11px 12px;text-align:right;font-weight:700;color:'+REP.ink+';border-bottom:1px solid '+REP.line+';">'+PESO(r.queda||0)+'</td>'+
+      '</tr>';
+    }).join('');
+
+    return '<!doctype html><html lang="es"><head><meta charset="utf-8">'+
+      '<meta name="viewport" content="width=device-width,initial-scale=1">'+
+      '<title>Resumen '+esc(mesLabel)+' — '+esc(nombreHogar)+'</title>'+
+      '<style>'+
+        '*{box-sizing:border-box;}'+
+        'body{margin:0;background:'+REP.cream+';color:'+REP.ink+';font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'+
+        '.wrap{max-width:680px;margin:0 auto;padding:24px 18px 40px;}'+
+        '.head{background:linear-gradient(135deg,'+REP.green+','+REP.teal+');color:#fff;border-radius:20px;padding:24px 24px;margin-bottom:18px;box-shadow:0 8px 24px rgba(29,158,117,.18);}'+
+        '.head .casa{font-size:13px;opacity:.9;letter-spacing:.3px;text-transform:uppercase;}'+
+        '.head .mes{font-size:26px;font-weight:800;margin:2px 0 0;}'+
+        '.head .marca{font-size:13px;opacity:.85;margin-top:6px;}'+
+        '.metrics{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}'+
+        '.card{background:'+REP.surface+';border:1px solid '+REP.line+';border-radius:18px;padding:18px 20px;margin-bottom:18px;}'+
+        '.card h2{font-size:15px;margin:0 0 14px;display:flex;align-items:center;gap:8px;}'+
+        'table{width:100%;border-collapse:collapse;font-size:14px;}'+
+        'th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:'+REP.muted+';padding:0 12px 8px;border-bottom:2px solid '+REP.line+';}'+
+        'th.r,td.r{text-align:right;}'+
+        '.legend{display:flex;gap:18px;margin-top:12px;font-size:13px;color:'+REP.muted+';}'+
+        '.dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle;}'+
+        '.foot{text-align:center;color:'+REP.muted+';font-size:12px;margin-top:24px;}'+
+        '.tot{background:'+REP.greenSoft+';border:1px solid '+REP.green+';border-radius:14px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:700;}'+
+        '.tot .v{color:'+REP.green+';font-size:18px;}'+
+        '@media print{.wrap{padding:0;}body{background:#fff;}}'+
+      '</style></head><body><div class="wrap">'+
+      '<div class="head"><div class="casa">🏠 '+esc(nombreHogar)+'</div><div class="mes">'+esc(mesLabel)+'</div><div class="marca">Resumen mensual · pawnest</div></div>'+
+      '<div class="metrics">'+
+        metric("💰 Total gastos", PESO(calc.gasto), REP.gold)+
+        metric("💵 Cuentas", PESO(calc.cuentasTotal), REP.ink)+
+        metric("🛒 Despensa", PESO(calc.despensaTotal), REP.ink)+
+        metric("🐷 Ahorro validado", PESO(ahorroTotal), REP.green)+
+      '</div>'+
+      '<div class="card"><h2>📊 Gastos y ahorro por persona</h2>'+
+        chartReporte(calc, ahorroPP)+
+        '<div class="legend"><span><span class="dot" style="background:'+REP.gold+';"></span>Aporte a gastos</span>'+
+        '<span><span class="dot" style="background:'+REP.green+';"></span>Ahorro</span></div>'+
+      '</div>'+
+      '<div class="card"><h2>👥 Saldo por persona</h2>'+
+        '<table><thead><tr><th>Persona</th><th class="r">Sueldo</th><th class="r">Aporte</th><th class="r">Ahorro</th><th class="r">Libre</th></tr></thead>'+
+        '<tbody>'+filas+'</tbody></table></div>'+
+      '<div class="tot"><span>🐷 Fondo de ahorro común</span><span class="v">'+PESO(ahorroTotal)+'</span></div>'+
+      '<div class="foot">Generado el '+esc(fechaGen)+' con pawnest 🐾 · Tu hogar, en orden.</div>'+
+      '</div></body></html>';
+  }
+
+  function descargarReporte(){
     var now=new Date();
     var mesAnio=now.toLocaleDateString("es-CL",{month:"long",year:"numeric"});
     var nombreHogar=((familiaActual&&familiaActual.name)||state.nombre||"hogar").replace(/[^\wáéíóúñ ]/gi,"").trim().replace(/\s+/g,"_")||"hogar";
-    var filename=nombreHogar+"_"+mesAnio.replace(/\s+/g,"_")+".csv";
-    // BOM para que Excel respete los acentos
-    var txt="\uFEFF"+generarResumenTexto(",");
-    var blob=new Blob([txt],{type:"text/csv;charset=utf-8;"});
+    var filename="Resumen_"+nombreHogar+"_"+mesAnio.replace(/\s+/g,"_")+".html";
+    var blob=new Blob([generarReporteHTML()],{type:"text/html;charset=utf-8;"});
     var esIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) ||
               (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
     var url=URL.createObjectURL(blob);
     if(esIOS){
       window.open(url,"_blank");
-      setStatus("CSV abierto en pestaña nueva → Compartir → Guardar","on");
+      setStatus("Reporte abierto → Compartir → Guardar o imprimir","on");
     } else {
       var a=document.createElement("a");
       a.href=url; a.download=filename;
       document.body.appendChild(a); a.click();
       setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },1500);
-      setStatus("CSV descargado ✓ (se abre en Excel)","on");
+      setStatus("Reporte descargado ✓ (ábrelo o imprímelo como PDF)","on");
     }
   }
 
