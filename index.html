@@ -777,10 +777,15 @@
         if(box) box.innerHTML='<div class="card soft" style="margin-top:10px;text-align:center;"><div class="muted">Código (válido 7 días)</div><div style="font-size:26px;font-weight:700;letter-spacing:3px;margin:6px 0;">'+esc(code)+'</div><button class="btn" id="copyInvA">📋 Copiar</button></div>';
         var cpy=document.getElementById("copyInvA"); if(cpy)cpy.onclick=function(){ copiarTexto(code,function(){cpy.textContent="✓ Copiado";},function(){cpy.textContent="📋 Copiar";}); };
         if(email && hogar){
-          var nombreHogar=esc((familiaActual&&familiaActual.name)||state.nombre||"nuestro hogar");
-          var asunto=encodeURIComponent("Te invitan a unirte a "+nombreHogar+" en pawnest");
-          var cuerpo=encodeURIComponent("¡Hola!\n\nTe invitan al hogar \""+nombreHogar+"\" en pawnest 🏠\n\nAbre la app, crea tu cuenta y usa este código para unirte. Al entrar elegirás tu propio nombre:\n\n  Código: "+code+"\n\n(Válido por 7 días)\n\n¡Nos vemos en casa!");
-          window.open("mailto:"+encodeURIComponent(email)+"?subject="+asunto+"&body="+cuerpo,"_blank");
+          var nombreHogar=(familiaActual&&familiaActual.name)||state.nombre||"nuestro hogar";
+          fetch("https://epylduwqmwueptshmizh.supabase.co/functions/v1/send-invite-email",{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({to:email,code:code,nombreHogar:nombreHogar})
+          }).then(function(r){ return r.json(); }).then(function(d){
+            var box=document.getElementById("invAdultBox");
+            if(d.ok){ if(box){ var cur=box.innerHTML; box.innerHTML=cur+'<p class="muted" style="margin:8px 0 0;">✉️ Correo enviado a '+esc(email)+'</p>'; } }
+            else { if(box){ var cur=box.innerHTML; box.innerHTML=cur+'<p class="muted" style="margin:8px 0 0;color:var(--warning);">No se pudo enviar el correo. Comparte el código manualmente.</p>'; } }
+          }).catch(function(){ });
         }
       });
     };
@@ -793,10 +798,11 @@
       if(!n)return; if(state.usuarios.indexOf(n)>=0){ setStatus("Ya existe alguien con ese nombre"); return; }
       state.usuarios.push(n); state.hijos[n]=true; masc(n); if(miId)state.duenos[n]=miId; save(); render();
       if(email){
-        var nombreHogar=esc(state.nombre||"nuestro hogar");
-        var asunto=encodeURIComponent(n+" fue añadido/a al hogar en pawnest");
-        var cuerpo=encodeURIComponent("Hola,\n\n"+n+" fue agregado/a al hogar \""+nombreHogar+"\" en pawnest como hijo/a 👶\n\nPodrá ver sus encargos, cuidar su mascota y ganar puntos. No necesita cuenta propia.\n\n¡Todo listo!");
-        window.open("mailto:"+encodeURIComponent(email)+"?subject="+asunto+"&body="+cuerpo,"_blank");
+        var nombreHogar=state.nombre||"nuestro hogar";
+        fetch("https://epylduwqmwueptshmizh.supabase.co/functions/v1/send-invite-email",{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({to:email,code:null,nombreHogar:nombreHogar,hijoNombre:n})
+        }).catch(function(){});
       }
       popupInfo("👶 ¡"+esc(n)+" se sumó a la familia!",[
         {ic:"📌",t:"Ya puedes asignarle <b>Encargos</b> (apareció esa pestaña). Solo tú y "+esc(n)+" los ven."},
