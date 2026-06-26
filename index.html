@@ -1167,21 +1167,56 @@
   function verResumenPantalla(){
     var box=document.getElementById("resumenBox");
     if(!box) return;
-    if(box.style.display==="block"){ box.style.display="none"; return; }
-    var txt=generarResumenTexto("\t");
-    var rows=txt.split("\n").map(function(line){
-      if(line==="") return '<tr><td style="padding:3px 0;">&nbsp;</td></tr>';
-      var cells=line.split("\t");
-      if(cells.length===1){
-        return '<tr><td colspan="5" style="font-weight:700;padding:6px 0 2px;color:var(--info);">'+esc(cells[0])+'</td></tr>';
-      }
-      return '<tr>'+cells.map(function(c){
-        var num=/^-?\d+$/.test(c);
-        return '<td style="padding:3px 8px 3px 0;'+(num?'text-align:right;font-variant-numeric:tabular-nums;':'')+'">'+esc(num?PESO(+c):c)+'</td>';
-      }).join('')+'</tr>';
-    }).join('');
-    box.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">'+rows+'</table></div>';
+    var btn=document.getElementById("verResumenBtn");
+    if(box.style.display==="block"){
+      box.style.display="none";
+      if(btn) btn.innerHTML="👁️ Ver resumen en pantalla";
+      return;
+    }
+
+    var calc=calcularAportes();
+    var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
+    var ahorroTotal=aprobados.reduce(function(s,a){return s+(+a.monto||0);},0);
+    var ahorroPP={}; state.usuarios.forEach(function(u){ahorroPP[u]=0;});
+    aprobados.forEach(function(a){ if(ahorroPP[a.autor]!==undefined) ahorroPP[a.autor]+=(+a.monto||0); });
+    var now=new Date();
+    var mesAnio=now.toLocaleDateString("es-CL",{month:"long",year:"numeric"});
+    var mesLabel=mesAnio.charAt(0).toUpperCase()+mesAnio.slice(1);
+
+    var h='';
+    // Encabezado del resumen
+    h+='<div style="text-align:center;margin:2px 0 12px;"><div style="font-weight:700;font-size:15px;">📅 '+esc(mesLabel)+'</div><div class="muted" style="font-size:12px;">Resumen mensual · pawnest</div></div>';
+
+    // Gastos del hogar
+    h+='<div class="card soft" style="margin-bottom:10px;"><div style="font-weight:600;margin-bottom:8px;">🏠 Gastos del hogar</div>';
+    h+='<div class="grid2" style="margin-bottom:8px;">';
+    h+='<div class="metric" style="padding:8px 10px;"><div class="muted">💵 Cuentas</div><div style="font-weight:600;">'+PESO(calc.cuentasTotal)+'</div></div>';
+    h+='<div class="metric" style="padding:8px 10px;"><div class="muted">🛒 Despensa</div><div style="font-weight:600;">'+PESO(calc.despensaTotal)+'</div></div>';
+    h+='</div>';
+    h+='<div class="row" style="justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;"><span style="font-weight:600;">Total gastos</span><span style="font-weight:700;">'+PESO(calc.gasto)+'</span></div>';
+    h+='</div>';
+
+    // Saldo por persona
+    h+='<div style="font-weight:600;margin:0 0 6px 2px;">👥 Saldo por persona</div>';
+    state.usuarios.forEach(function(u){
+      var c=colorFor(u), r=calc.res[u]||{sueldo:0,aporte:0,queda:0};
+      h+='<div class="card" style="margin-bottom:8px;"><div class="row" style="justify-content:space-between;margin-bottom:6px;">';
+      h+='<span class="pill" style="background:var(--'+c+'-bg);color:var(--'+c+');">'+esc(u)+'</span>';
+      h+='<span class="muted">Sueldo: '+PESO(r.sueldo||0)+'</span></div>';
+      h+='<div class="grid2">';
+      h+='<div class="metric" style="padding:7px 9px;"><div class="muted">💸 Aporte</div><div style="font-weight:600;">'+PESO(r.aporte||0)+'</div></div>';
+      h+='<div class="metric" style="padding:7px 9px;"><div class="muted">🐷 Ahorro</div><div style="font-weight:600;color:var(--success);">'+PESO(ahorroPP[u]||0)+'</div></div>';
+      h+='</div>';
+      h+='<div style="font-size:13px;margin-top:6px;">Queda libre: <b style="color:var(--success);">'+PESO(r.queda||0)+'</b></div>';
+      h+='</div>';
+    });
+
+    // Fondo de ahorro común
+    h+='<div class="card soft" style="margin-bottom:0;"><div class="row" style="justify-content:space-between;"><span style="font-weight:600;">🐷 Fondo de ahorro común</span><span style="font-weight:700;color:var(--success);">'+PESO(ahorroTotal)+'</span></div></div>';
+
+    box.innerHTML=h;
     box.style.display="block";
+    if(btn) btn.innerHTML="🙈 Ocultar resumen";
   }
 
   function copiarResumen(){
