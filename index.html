@@ -156,7 +156,7 @@
   ];
   var MENU_IDS={integrantes:1,cierre:1,ajustes:1}; // estas van en el menú ⋯ de arriba, no en la barra inferior
 
-  var DEFAULT={adminId:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
+  var DEFAULT={adminId:null,plan:"free",planExpira:null,usuarios:[],duenos:{},hijos:{},sueldos:{},minimos:{},metodo:"minimo",cuentas:[],despensa:[],notas:[],tareas:[],asignadas:[],rotSemana:0,metas:[],ahorros:[],topePesada:3,checks:{},puntos:{},mascota:{}};
   var state=JSON.parse(JSON.stringify(DEFAULT));
   var currentUser=null, activeTab="integrantes", subGastos="cuentas";
   var sb=null, hogar=null, conectado=false, guardando=false, ultimoGuardado="";
@@ -194,6 +194,41 @@
   function brandImg(w){ var src=temaResuelto()==="dark"?"logo-dark.png":"logo.png"; return '<span class="brandbox"><img src="'+src+'" alt="pawnest" style="width:'+w+'px;max-width:78vw;height:auto;display:block;"></span>'; }
   function adminUser(){ return state.usuarios[0]||null; }
   function esAdmin(){ return !!(sesion&&sesion.user&&state.adminId&&sesion.user.id===state.adminId); }
+  // ===== PREMIUM / FREEMIUM (suscripción por hogar) =====
+  // Correos que SIEMPRE son premium (cuentas del proyecto / pruebas). En minúsculas.
+  var PREMIUM_EMAILS={"adolfo.henriquez010@gmail.com":1};
+  // Override de pruebas por dispositivo: fuerza premium/free para probar el gating sin pagar.
+  var PREMIUM_DEV_KEY="nh_premium_dev_v1";
+  function premiumDevOverride(){ try{ return localStorage.getItem(PREMIUM_DEV_KEY); }catch(e){ return null; } } // "on" | "off" | null
+  function setPremiumDevOverride(v){ try{ if(v) localStorage.setItem(PREMIUM_DEV_KEY,v); else localStorage.removeItem(PREMIUM_DEV_KEY); }catch(e){} }
+  function correoActual(){ return (sesion&&sesion.user&&sesion.user.email)?String(sesion.user.email).toLowerCase():""; }
+  function esPremium(){
+    var ov=premiumDevOverride(); if(ov==="on") return true; if(ov==="off") return false;   // pruebas mandan
+    if(PREMIUM_EMAILS[correoActual()]) return true;                                          // correo del proyecto
+    if(state.plan==="premium"){ if(!state.planExpira) return true; return new Date(state.planExpira).getTime() > Date.now(); } // plan del hogar (no vencido)
+    return false;
+  }
+  // Límites de la versión gratuita (premium = sin límite)
+  var LIM={gastos:4,integrantes:2,quehaceres:3};
+  function limite(k){ return esPremium()?Infinity:(LIM[k]||Infinity); }
+  function irPremium(){ activeTab="premium"; render(); }
+  // El "mínimo vital" es Premium: en gratis el reparto siempre es proporcional
+  function metodoEfectivo(){ return esPremium()?state.metodo:"proporcional"; }
+  // Tarjeta que bloquea una sección entera premium (Despensa, Metas, Cierre, niños…)
+  function cardBloqueoPremium(titulo, desc){
+    return '<div class="card soft" style="text-align:center;border:1px dashed var(--border2);padding:26px 18px;">'+
+      '<div style="font-size:38px;">🔒</div>'+
+      '<div style="font-weight:700;font-size:17px;margin:8px 0 4px;">'+esc(titulo)+'</div>'+
+      '<p class="muted" style="margin:0 0 14px;">'+esc(desc)+'</p>'+
+      '<button class="btn primary" id="goPrem">⭐ Mejorar a Premium</button></div>';
+  }
+  // Aviso inline cuando se alcanzó un tope numérico de la versión gratis
+  function cardLimite(msg){
+    return '<div class="card" style="background:var(--warning-bg);color:var(--warning);border:none;display:flex;align-items:center;gap:10px;justify-content:space-between;">'+
+      '<span style="font-weight:600;">⭐ '+esc(msg)+'</span><button class="btn" id="goPrem" style="flex:none;">Mejorar</button></div>';
+  }
+  // Conecta cualquier botón #goPrem recién renderizado con la pantalla de planes
+  function wireGoPrem(){ var b=document.getElementById("goPrem"); if(b) b.onclick=irPremium; }
   function colorFor(u){ var i=state.usuarios.indexOf(u); return PALETTE[i%PALETTE.length]||"info"; }
   function esHijo(u){ state.hijos=state.hijos||{}; return !!state.hijos[u]; }
   function adultos(){ return state.usuarios.filter(function(u){ return !esHijo(u); }); } // los que sí participan del reparto de cuentas
@@ -513,12 +548,12 @@
     function sueldo(u){return +state.sueldos[u]||0;} function minimo(u){return +state.minimos[u]||0;}
     var ingresoTotal=us.reduce(function(s,u){return s+sueldo(u);},0);
     var base={},baseTotal=0;
-    if(state.metodo==="proporcional"){ us.forEach(function(u){base[u]=sueldo(u);}); baseTotal=ingresoTotal; }
+    if(metodoEfectivo()==="proporcional"){ us.forEach(function(u){base[u]=sueldo(u);}); baseTotal=ingresoTotal; }
     else { us.forEach(function(u){base[u]=Math.max(0,sueldo(u)-minimo(u));}); baseTotal=us.reduce(function(s,u){return s+base[u];},0); }
     var res={};
     us.forEach(function(u){ var frac=baseTotal>0?base[u]/baseTotal:1/us.length; var aC=cT*frac,aD=dT*frac,ap=aC+aD;
       res[u]={sueldo:sueldo(u),minimo:minimo(u),aporte:ap,aCuentas:aC,aDespensa:aD,queda:sueldo(u)-ap,parte:frac*100}; });
-    return {gasto:gasto,cuentasTotal:cT,despensaTotal:dT,ingresoTotal:ingresoTotal,baseTotal:baseTotal,res:res,sinExcedente:state.metodo==="minimo"&&baseTotal===0};
+    return {gasto:gasto,cuentasTotal:cT,despensaTotal:dT,ingresoTotal:ingresoTotal,baseTotal:baseTotal,res:res,sinExcedente:metodoEfectivo()==="minimo"&&baseTotal===0};
   }
   function ocurrencias(){ var occ=[]; state.tareas.forEach(function(t){ var dias=t.freq==="diario"?[0,1,2,3,4,5,6]:(t.dias||[]).slice(); if(dias.length===0)dias=[0]; dias.forEach(function(d){occ.push({tarea:t,dia:d});}); }); return occ; }
   function planSemana(semana){
@@ -577,6 +612,7 @@
     if(!tabPermitido(activeTab)) activeTab=soyHijo()?"asignadas":"gastos"; // redirige si la pestaña no corresponde al rol
     fillUserSel(); updatePts(); buildNav(); buildMenu();
     if(activeTab==="ajustes") return renderAjustes();
+    if(activeTab==="premium") return renderPremium();
     if(activeTab==="integrantes") return renderIntegrantes();
     if(state.usuarios.length===0){
       content.innerHTML='<div class="card soft" style="text-align:center;padding:24px 12px;"><div style="font-size:30px;">👋</div><p style="margin:8px 0 4px;font-weight:600;">Primero agrega a tu familia</p><p class="muted" style="margin:0 0 12px;">El primer integrante será el admin. Cada uno tendrá su mascota y puntos.</p><button class="btn primary" id="goInt">Ir a Familia →</button></div>';
@@ -594,6 +630,41 @@
     if(activeTab==="mascota") return renderMascota();
     if(activeTab==="notas") return renderNotas();
     if(activeTab==="cierre") return renderCierre();
+  }
+
+  // ===== Pantalla de planes (Mejora a Premium) =====
+  function renderPremium(){
+    var prem=esPremium();
+    var beneficios=[
+      "Gastos ilimitados (gratis: hasta "+LIM.gastos+")",
+      "Integrantes ilimitados (gratis: hasta "+LIM.integrantes+")",
+      "Quehaceres ilimitados (gratis: hasta "+LIM.quehaceres+")",
+      "Despensa compartida",
+      "Sistema de ahorro y metas",
+      "Cierre de mes",
+      "Mínimo vital en los aportes",
+      "Sección de niños y encargos",
+      "Temas y novedades futuras",
+      "Siempre sin anuncios"
+    ];
+    var h='<div style="text-align:center;margin:6px 0 14px;"><div style="font-size:40px;">⭐</div><div class="sec-title" style="justify-content:center;">pawnest Premium</div><p class="muted" style="margin:0;">Desbloquea todo para tu hogar. Un pago, toda la familia.</p></div>';
+    if(prem){ h+='<div class="card" style="background:var(--success-bg);color:var(--success);border:none;text-align:center;font-weight:600;">✓ Tu hogar ya es Premium. ¡Gracias!</div>'; }
+    h+='<div class="card soft"><div style="font-weight:700;margin-bottom:8px;">Incluye</div>';
+    beneficios.forEach(function(b){ h+='<div class="row" style="align-items:center;gap:8px;margin-bottom:6px;"><span style="color:var(--success);font-weight:700;">✓</span><span>'+esc(b)+'</span></div>'; });
+    h+='</div>';
+    // Planes
+    h+='<div class="grid2" style="margin-top:6px;">'+
+      '<div class="card" style="text-align:center;"><div class="muted">Mensual</div><div style="font-size:24px;font-weight:700;margin:4px 0;">$4.90</div><div class="muted" style="font-size:12px;">al mes</div><button class="btn primary block" id="buyMes" style="margin-top:10px;"'+(prem?" disabled":"")+'>Elegir</button></div>'+
+      '<div class="card" style="text-align:center;border:1.5px solid var(--primary);position:relative;"><span class="pill" style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;">Ahorra ~49%</span><div class="muted">Anual</div><div style="font-size:24px;font-weight:700;margin:4px 0;">$30</div><div class="muted" style="font-size:12px;">al año</div><button class="btn primary block" id="buyAno" style="margin-top:10px;"'+(prem?" disabled":"")+'>Elegir</button></div>'+
+      '</div>';
+    h+='<p class="muted" style="text-align:center;font-size:12px;margin-top:12px;">El pago se procesará mediante Google Play. Puedes cancelar cuando quieras.</p>';
+    h+='<button class="btn block" id="premVolver" style="margin-top:10px;">← Volver</button>';
+    content.innerHTML=h;
+    // Compra: placeholder hasta integrar Google Play Billing (requiere cuentas del proyecto)
+    function noDisponible(){ popupInfo("Pagos en camino",[{ic:"⏳",t:"Los pagos estarán disponibles muy pronto."},{ic:"🛠️",t:"Estamos terminando de configurar la tienda."}],"Entendido"); }
+    var bm=document.getElementById("buyMes"), ba=document.getElementById("buyAno");
+    if(bm&&!prem) bm.onclick=noDisponible; if(ba&&!prem) ba.onclick=noDisponible;
+    document.getElementById("premVolver").onclick=function(){ activeTab=soyHijo()?"mascota":"gastos"; render(); };
   }
 
   function renderAjustes(){
@@ -615,8 +686,15 @@
     h+='<button class="btn block" id="recargar" style="margin-top:16px;margin-bottom:8px;">Recargar datos del hogar</button>'+
       '<button class="btn no block" id="salirHogar" style="margin-bottom:8px;">🚪 Salir de esta casa</button>'+
       '<button class="btn no block" id="logout">Cerrar sesión</button>';
+    // ===== Estado de suscripción + toggle de PRUEBAS (quitar antes de lanzar) =====
+    var prem=esPremium(), ov=premiumDevOverride();
+    h+='<div class="sec-title">⭐ Suscripción</div>'+
+      '<div class="card"><div class="row" style="align-items:center;"><div class="grow"><div style="font-weight:600;font-size:16px;">'+(prem?"Premium ⭐":"Gratis")+'</div><div class="muted">'+(prem?"Tu hogar tiene todas las funciones desbloqueadas.":"Algunas funciones están bloqueadas.")+'</div></div></div></div>';
+    h+='<div class="card soft" style="border:1px dashed var(--border2);"><div style="font-weight:600;margin-bottom:6px;">🧪 Modo prueba (solo desarrollo)</div><p class="muted" style="margin:0 0 8px;">Fuerza el estado premium para probar los candados. Se quita antes de publicar.</p>'+
+      '<div class="row" style="gap:6px;"><button class="btn'+(ov==="on"?" primary":"")+' grow" data-prem="on">Premium</button><button class="btn'+(ov==="off"?" primary":"")+' grow" data-prem="off">Gratis</button><button class="btn'+(!ov?" primary":"")+' grow" data-prem="">Auto</button></div></div>';
     h+='<div style="text-align:center;margin:26px 0 6px;">'+brandImg(120)+'<div class="muted" style="font-size:11px;margin-top:4px;">Hecho con 💚 para tu hogar · v1.0</div></div>';
     content.innerHTML=h;
+    Array.prototype.forEach.call(content.querySelectorAll("[data-prem]"),function(b){ b.onclick=function(){ setPremiumDevOverride(b.getAttribute("data-prem")); render(); }; });
     document.getElementById("salirHogar").onclick=function(){
       var soyAdmin=esAdmin();
       var aviso="¿Salir de \""+(familiaActual&&familiaActual.name||"esta casa")+"\"?\n\nDejarás de ver sus datos."+(soyAdmin?"\n\n⚠️ Eres el admin: si te sales, la casa quedará sin admin.":"")+"\n\nSi eres la última persona, la casa y todos sus datos se borrarán y no se pueden recuperar.";
@@ -659,26 +737,75 @@
     var admin=esAdmin(), miId=(sesion&&sesion.user)?sesion.user.id:null;
     state.duenos=state.duenos||{};
     function puedeBorrar(nm){ return admin||(!!miId&&state.duenos[nm]===miId); }
-    var h='<div class="card soft"><label class="lbl">Agregar integrante</label><div class="row"><input id="uN" placeholder="Tu nombre…" class="grow"><button class="btn primary" id="uAdd">Añadir</button></div><p class="muted" style="margin:6px 0 0;">Crea tu nombre para registrar tus puntos, tareas y mascota.'+(admin?' Como admin, puedes eliminar a cualquier integrante.':' Puedes eliminar el tuyo cuando quieras.')+'</p></div>';
-    h+='<div class="card soft"><label class="lbl">👶 Agregar un hijo/a</label><div class="row"><input id="hN" placeholder="Nombre del hijo/a…" class="grow"><button class="btn" id="hAdd">Agregar</button></div><p class="muted" style="margin:6px 0 0;">Tiene su mascota y recibe encargos para ganar puntos, pero <b>no participa del reparto de cuentas</b>. No necesita cuenta propia.</p></div>';
+    var topeInt=limite("integrantes"), intEnTope=state.usuarios.length>=topeInt;
+    var h='';
+    // Si todavía no tengo un nombre en este hogar (recién me uní con una invitación), lo elijo yo mismo.
+    if(!currentUser){
+      if(intEnTope) h+=cardLimite("Este hogar llegó al límite de "+topeInt+" integrantes. Pídele al admin que active Premium para poder sumarte.");
+      else h+='<div class="card soft" style="border:1px solid var(--primary);"><label class="lbl">✍️ Elige tu nombre</label><input id="myN" placeholder="¿Cómo te llamas?" class="grow" style="margin-bottom:8px;"><div class="row"><button class="btn primary grow" id="myAdd">Este es mi nombre</button></div><p class="muted" style="margin:6px 0 0;">Así te verá tu familia y se guardan tus puntos y tu mascota.</p></div>';
+    }
+    // Si ya tengo nombre, puedo invitar a otro adulto: solo le mando un código y él elige su propio nombre al entrar.
+    if(currentUser){
+      if(intEnTope) h+=cardLimite("Llegaste al límite de "+topeInt+" integrantes. Hazte Premium para sumar a toda la familia.");
+      else h+='<div class="card soft"><label class="lbl">Invitar a un adulto</label><input id="invEmail" placeholder="Correo (opcional, para enviarle la invitación)" class="grow" type="email" style="margin-bottom:8px;"><div class="row"><button class="btn primary grow" id="invAdd">Crear invitación</button></div><div id="invAdultBox"></div><p class="muted" style="margin:6px 0 0;">Le enviamos un código. Al entrar <b>elige su propio nombre</b>. '+(admin?'Como admin puedes eliminar a cualquier integrante.':'Puedes eliminar el tuyo cuando quieras.')+(isFinite(topeInt)?' Gratis: '+state.usuarios.length+'/'+topeInt+'.':'')+'</p></div>';
+    }
+    if(!esPremium()) h+=cardBloqueoPremium("Sección de niños es Premium","Agrega a tus hijos con su mascota y encargos para ganar puntos. Desbloquéalo con Premium.");
+    else h+='<div class="card soft"><label class="lbl">👶 Agregar un hijo/a</label><input id="hN" placeholder="Nombre del hijo/a…" class="grow" style="margin-bottom:8px;"><input id="hEmail" placeholder="Correo del padre/tutor (opcional)" class="grow" type="email" style="margin-bottom:8px;"><div class="row"><button class="btn grow" id="hAdd">Agregar hijo/a</button></div><p class="muted" style="margin:6px 0 0;">Tiene su mascota y recibe encargos para ganar puntos, pero <b>no participa del reparto de cuentas</b>. No necesita cuenta propia.</p></div>';
     if(state.usuarios.length===0) h+='<p class="empty">Aún no hay nadie. Añade al primero.</p>';
     else { h+='<p class="muted" style="margin:14px 0 6px;">'+state.usuarios.length+' integrante(s)</p>';
       state.usuarios.forEach(function(u){ var m=masc(u),hijo=esHijo(u),esAdminN=(u===adminUser())&&!hijo;
         h+='<div class="card"><div class="row"><div>'+svgMascota(m,"ok",42)+'</div><div class="grow" style="font-weight:600;">'+esc(u)+' <span style="font-size:12px;color:var(--warning);font-weight:600;">· '+pts(u)+' pts</span></div>'+(esAdminN?'<span class="pill" style="background:var(--info-bg);color:var(--info);">🛡️ Admin</span>':'')+(hijo?'<span class="pill" style="background:var(--success-bg);color:var(--success);">👶 Hijo/a</span>':'')+(puedeBorrar(u)?'<button class="del" data-del="'+esc(u)+'">🗑️</button>':'')+'</div></div>'; });
     }
     content.innerHTML=h;
-    var add=function(){ var n=document.getElementById("uN").value.trim(); if(!n||state.usuarios.indexOf(n)>=0)return; state.usuarios.push(n); masc(n); if(miId)state.duenos[n]=miId; if(!currentUser)currentUser=n; save(); render(); };
-    document.getElementById("uAdd").onclick=add;
-    document.getElementById("uN").addEventListener("keydown",function(e){ if(e.key==="Enter")add(); });
-    var addHijo=function(){ var n=document.getElementById("hN").value.trim(); if(!n)return; if(state.usuarios.indexOf(n)>=0){ setStatus("Ya existe alguien con ese nombre"); return; } state.usuarios.push(n); state.hijos[n]=true; masc(n); if(miId)state.duenos[n]=miId; save(); render();
+    // Elegir MI nombre (cuando me acabo de unir y aún no tengo uno).
+    var elegirMiNombre=function(){
+      var n=document.getElementById("myN").value.trim();
+      if(!n)return;
+      if(state.usuarios.indexOf(n)>=0){ setStatus("Ya existe alguien con ese nombre. Elige otro."); return; }
+      state.usuarios.push(n); masc(n); if(miId)state.duenos[n]=miId; currentUser=n; save(); render();
+    };
+    var myAddBtn=document.getElementById("myAdd");
+    if(myAddBtn){ myAddBtn.onclick=elegirMiNombre; document.getElementById("myN").addEventListener("keydown",function(e){ if(e.key==="Enter")elegirMiNombre(); }); }
+    // Invitar a otro adulto: genera un código y se lo manda; él elige su nombre al entrar.
+    var invitarAdulto=function(){
+      var email=document.getElementById("invEmail").value.trim();
+      var btn=document.getElementById("invAdd"); if(btn){ btn.disabled=true; btn.textContent="Generando código…"; }
+      generarInvitacion(function(code,err){
+        if(btn){ btn.disabled=false; btn.textContent="Crear invitación"; }
+        var box=document.getElementById("invAdultBox");
+        if(err){ if(box)box.innerHTML='<div class="card" style="background:var(--danger-bg);color:var(--danger);border:none;margin-top:10px;">No se pudo generar: '+esc(err.message)+'</div>'; return; }
+        if(box) box.innerHTML='<div class="card soft" style="margin-top:10px;text-align:center;"><div class="muted">Código (válido 7 días)</div><div style="font-size:26px;font-weight:700;letter-spacing:3px;margin:6px 0;">'+esc(code)+'</div><button class="btn" id="copyInvA">📋 Copiar</button></div>';
+        var cpy=document.getElementById("copyInvA"); if(cpy)cpy.onclick=function(){ copiarTexto(code,function(){cpy.textContent="✓ Copiado";},function(){cpy.textContent="📋 Copiar";}); };
+        if(email && hogar){
+          var nombreHogar=esc((familiaActual&&familiaActual.name)||state.nombre||"nuestro hogar");
+          var asunto=encodeURIComponent("Te invitan a unirte a "+nombreHogar+" en pawnest");
+          var cuerpo=encodeURIComponent("¡Hola!\n\nTe invitan al hogar \""+nombreHogar+"\" en pawnest 🏠\n\nAbre la app, crea tu cuenta y usa este código para unirte. Al entrar elegirás tu propio nombre:\n\n  Código: "+code+"\n\n(Válido por 7 días)\n\n¡Nos vemos en casa!");
+          window.open("mailto:"+encodeURIComponent(email)+"?subject="+asunto+"&body="+cuerpo,"_blank");
+        }
+      });
+    };
+    var invAddBtn=document.getElementById("invAdd");
+    if(invAddBtn){ invAddBtn.onclick=invitarAdulto; document.getElementById("invEmail").addEventListener("keydown",function(e){ if(e.key==="Enter")invitarAdulto(); }); }
+    wireGoPrem();
+    var addHijo=function(){
+      var n=document.getElementById("hN").value.trim();
+      var email=document.getElementById("hEmail").value.trim();
+      if(!n)return; if(state.usuarios.indexOf(n)>=0){ setStatus("Ya existe alguien con ese nombre"); return; }
+      state.usuarios.push(n); state.hijos[n]=true; masc(n); if(miId)state.duenos[n]=miId; save(); render();
+      if(email){
+        var nombreHogar=esc(state.nombre||"nuestro hogar");
+        var asunto=encodeURIComponent(n+" fue añadido/a al hogar en pawnest");
+        var cuerpo=encodeURIComponent("Hola,\n\n"+n+" fue agregado/a al hogar \""+nombreHogar+"\" en pawnest como hijo/a 👶\n\nPodrá ver sus encargos, cuidar su mascota y ganar puntos. No necesita cuenta propia.\n\n¡Todo listo!");
+        window.open("mailto:"+encodeURIComponent(email)+"?subject="+asunto+"&body="+cuerpo,"_blank");
+      }
       popupInfo("👶 ¡"+esc(n)+" se sumó a la familia!",[
         {ic:"📌",t:"Ya puedes asignarle <b>Encargos</b> (apareció esa pestaña). Solo tú y "+esc(n)+" los ven."},
         {ic:"🐾",t:"Tiene su propia <b>mascota</b> y gana puntos al completar tareas."},
         {ic:"📅",t:"Aparece en <b>Quehaceres</b> y ayuda con la casa."},
         {ic:"🔒",t:"<b>No</b> ve Gastos, Aporte ni Metas — esas son cosas de adultos."}
       ],"¡Genial!"); };
-    document.getElementById("hAdd").onclick=addHijo;
-    document.getElementById("hN").addEventListener("keydown",function(e){ if(e.key==="Enter")addHijo(); });
+    var hAddBtn=document.getElementById("hAdd");
+    if(hAddBtn){ hAddBtn.onclick=addHijo; document.getElementById("hN").addEventListener("keydown",function(e){ if(e.key==="Enter")addHijo(); }); }
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ var nm=b.getAttribute("data-del"); if(!puedeBorrar(nm))return; if(!confirm("¿Eliminar a "+nm+"? Se borran sus puntos y su mascota.")) return; state.usuarios=state.usuarios.filter(function(x){return x!==nm;}); delete state.sueldos[nm];delete state.minimos[nm];delete state.puntos[nm];delete state.mascota[nm];delete state.duenos[nm];delete state.hijos[nm]; if(currentUser===nm)currentUser=state.usuarios[0]||null; save(); render(); }; });
   }
 
@@ -697,12 +824,16 @@
     var admin=esAdmin();
     var items=state.cuentas, total=items.reduce(function(s,i){return s+(+i.monto||0);},0);
     var pagados=items.filter(function(i){return i.pagado;}).reduce(function(s,i){return s+(+i.monto||0);},0);
+    var topeGastos=limite("gastos"), enTope=items.length>=topeGastos;
     var h='<div class="metrics"><div class="metric"><div class="l">Total mensual</div><div class="v">'+PESO(total)+'</div></div><div class="metric"><div class="l">Pagado</div><div class="v" style="color:var(--success);">'+PESO(pagados)+'</div></div><div class="metric"><div class="l">Pendiente</div><div class="v" style="color:var(--danger);">'+PESO(total-pagados)+'</div></div><div class="metric"><div class="l">Reparto justo</div><div class="v" style="font-size:14px;padding-top:5px;">Ver “Aporte”</div></div></div>';
-    h+='<div class="card soft"><div class="field"><label class="lbl">Concepto</label><input id="cN" placeholder="Agua, Luz, Internet…"></div><div class="field"><label class="lbl">Monto</label><input id="cM" type="number" inputmode="numeric" placeholder="0"></div><button class="btn primary block" id="cAdd">Agregar cuenta</button><p class="muted" style="margin:6px 0 0;">Cualquiera puede agregar. '+(admin?'Marca como pagada y todos reciben +8 puntos.':'Solo el admin marca cuándo se pagó.')+'</p></div>';
+    if(enTope) h+=cardLimite("Llegaste al límite de "+topeGastos+" gastos. Hazte Premium para agregar sin límite.");
+    else h+='<div class="card soft"><div class="field"><label class="lbl">Concepto</label><input id="cN" placeholder="Agua, Luz, Internet…"></div><div class="field"><label class="lbl">Monto</label><input id="cM" type="number" inputmode="numeric" placeholder="0"></div><button class="btn primary block" id="cAdd">Agregar cuenta</button><p class="muted" style="margin:6px 0 0;">Cualquiera puede agregar. '+(admin?'Marca como pagada y todos reciben +8 puntos.':'Solo el admin marca cuándo se pagó.')+(isFinite(topeGastos)?' Gratis: '+items.length+'/'+topeGastos+' gastos.':'')+'</p></div>';
     if(items.length===0) h+='<p class="empty">Sin cuentas. Agrega agua, luz, internet, dividendo…</p>';
     else items.forEach(function(it){ h+='<div class="card"><div class="row"><input type="checkbox" data-pay="'+it.id+'" '+(it.pagado?"checked":"")+' '+(admin?"":"disabled")+' style="width:20px;height:20px;flex:none;'+(admin?"":"opacity:.45;")+'"><div class="grow"><div style="font-weight:600;'+(it.pagado?"text-decoration:line-through;color:var(--text3);":"")+'">'+esc(it.nombre)+'</div><div class="muted">Por '+esc(it.autor||"—")+(it.pagado?' · pagada ✓':'')+'</div></div><div style="font-weight:600;">'+PESO(it.monto)+'</div><button class="del" data-del="'+it.id+'">🗑️</button></div></div>'; });
     content.innerHTML=h;
-    document.getElementById("cAdd").onclick=function(){ var n=document.getElementById("cN").value.trim(),m=+document.getElementById("cM").value; if(!n||!m)return; state.cuentas.push({id:uid(),nombre:n,monto:m,pagado:false,autor:currentUser}); save(); render(); };
+    wireGoPrem();
+    var cAddBtn=document.getElementById("cAdd");
+    if(cAddBtn) cAddBtn.onclick=function(){ if(state.cuentas.length>=limite("gastos")){ irPremium(); return; } var n=document.getElementById("cN").value.trim(),m=+document.getElementById("cM").value; if(!n||!m)return; state.cuentas.push({id:uid(),nombre:n,monto:m,pagado:false,autor:currentUser}); save(); render(); };
     if(admin){
       Array.prototype.forEach.call(content.querySelectorAll("[data-pay]"),function(c){ c.onchange=function(){ var it=state.cuentas.filter(function(x){return x.id===c.getAttribute("data-pay");})[0]; if(!it)return; it.pagado=c.checked; var d=c.checked?8:-8; state.usuarios.forEach(function(u){ state.puntos[u]=Math.max(0,(state.puntos[u]||0)+d); }); updatePts(); save(); render(); }; });
     }
@@ -710,8 +841,8 @@
   }
 
   function renderAporte(){
-    var calc=calcularAportes(),esMin=state.metodo==="minimo";
-    var h='<div class="card soft"><div class="row" style="justify-content:space-between;margin-bottom:8px;"><span style="font-weight:600;">Método</span><div class="seg"><button id="mMin" class="'+(esMin?"on":"")+'">Mínimo vital</button><button id="mProp" class="'+(!esMin?"on":"")+'">Proporcional</button></div></div><p class="muted">'+(esMin?"Se protege un mínimo personal; el reparto cae sobre lo que sobra. Quien gana poco aporta poco o nada.":"Cada quien aporta el mismo porcentaje de su sueldo.")+'</p></div>';
+    var calc=calcularAportes(),prem=esPremium(),esMin=metodoEfectivo()==="minimo";
+    var h='<div class="card soft"><div class="row" style="justify-content:space-between;margin-bottom:8px;"><span style="font-weight:600;">Método</span><div class="seg"><button id="mMin" class="'+(esMin?"on":"")+'">Mínimo vital'+(prem?"":" 🔒")+'</button><button id="mProp" class="'+(!esMin?"on":"")+'">Proporcional</button></div></div><p class="muted">'+(esMin?"Se protege un mínimo personal; el reparto cae sobre lo que sobra. Quien gana poco aporta poco o nada.":"Cada quien aporta el mismo porcentaje de su sueldo.")+(prem?"":" El <b>mínimo vital</b> es una función Premium.")+'</p></div>';
     h+='<div class="card soft"><label class="lbl">Datos de '+esc(currentUser)+'</label><div class="field"><span class="muted">Sueldo mensual</span><input id="sM" type="number" inputmode="numeric" placeholder="0" value="'+(state.sueldos[currentUser]||"")+'"></div><div class="field"><span class="muted">Mínimo a proteger '+(esMin?"":"(no usado)")+'</span><input id="sMin" type="number" inputmode="numeric" placeholder="Ej: 130000" value="'+(state.minimos[currentUser]||"")+'" '+(esMin?"":"disabled")+'></div><button class="btn primary block" id="sSave">Guardar mis datos</button></div>';
     if(calc.ingresoTotal===0) h+='<p class="empty">Ingresen sus sueldos para ver el reparto.</p>';
     else { h+='<div class="metrics"><div class="metric"><div class="l">Cuentas</div><div class="v">'+PESO(calc.cuentasTotal)+'</div></div><div class="metric"><div class="l">Despensa</div><div class="v">'+PESO(calc.despensaTotal)+'</div></div></div>';
@@ -722,12 +853,13 @@
         h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px;"><span class="pill" style="background:var(--'+c+'-bg);color:var(--'+c+');">'+esc(u)+'</span><span class="muted">'+(r.sueldo>0?"Sueldo "+PESO(r.sueldo):"Sin sueldo")+'</span></div><div style="font-size:13px;margin-bottom:5px;">Aporta <b style="font-size:15px;">'+PESO(r.aporte)+'</b> <span class="muted">('+PCT(r.sueldo>0?(r.aporte/r.sueldo)*100:0)+')</span></div><div class="bar" style="margin-bottom:8px;"><div style="width:'+wC+'%;background:var(--info);"></div><div style="width:'+(100-wC)+'%;background:var(--warning);"></div></div><div class="grid2"><div class="metric" style="padding:7px 9px;"><div class="muted">💵 Cuentas</div><div style="font-weight:600;">'+PESO(r.aCuentas)+'</div></div><div class="metric" style="padding:7px 9px;"><div class="muted">🛒 Despensa</div><div style="font-weight:600;">'+PESO(r.aDespensa)+'</div></div></div><div style="font-size:13px;margin-top:8px;">Le queda libre <b style="color:var(--success);">'+PESO(r.queda)+'</b></div></div>'; });
     }
     content.innerHTML=h;
-    document.getElementById("mMin").onclick=function(){ state.metodo="minimo"; save(); render(); };
+    document.getElementById("mMin").onclick=function(){ if(!esPremium()){ irPremium(); return; } state.metodo="minimo"; save(); render(); };
     document.getElementById("mProp").onclick=function(){ state.metodo="proporcional"; save(); render(); };
     document.getElementById("sSave").onclick=function(){ var v=+document.getElementById("sM").value,mn=+document.getElementById("sMin").value; if(v>=0)state.sueldos[currentUser]=v; if(mn>=0)state.minimos[currentUser]=mn; save(); render(); };
   }
 
   function renderDespensa(){
+    if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Despensa es Premium","Lleva el control de las compras del hogar y reparte el gasto entre todos. Desbloquéalo con Premium."); wireGoPrem(); return; }
     var items=state.despensa, total=items.reduce(function(s,i){return s+(+i.monto||0);},0);
     var pp={}; state.usuarios.forEach(function(u){pp[u]=0;}); items.forEach(function(it){ if(pp[it.autor]!==undefined)pp[it.autor]+=(+it.monto||0); });
     var h='<div class="metrics"><div class="metric"><div class="l">Gasto despensa</div><div class="v">'+PESO(total)+'</div></div><div class="metric"><div class="l">Compras</div><div class="v">'+items.length+'</div></div></div>';
@@ -741,6 +873,7 @@
   }
 
   function renderMetas(){
+    if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Ahorro y metas es Premium","Crea un fondo de ahorro común con validación y metas familiares con barra de progreso. Desbloquéalo con Premium."); wireGoPrem(); return; }
     var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
     var pendientes=state.ahorros.filter(function(a){return a.estado==="pendiente";});
     var ahorroTotal=aprobados.reduce(function(s,a){return s+(+a.monto||0);},0);
@@ -780,18 +913,24 @@
       state.usuarios.forEach(function(u){ var c=colorFor(u),mins=p.carga[u],horas=mins>=60?(Math.round(mins/6)/10)+" h":mins+" min";
         h+='<div class="card" style="padding:8px 10px;"><div class="row" style="justify-content:space-between;margin-bottom:6px;"><span class="pill" style="background:var(--'+c+'-bg);color:var(--'+c+');">'+esc(u)+'</span><span class="muted">~'+horas+' · '+p.vecesPesada[u]+' pes.</span></div><div class="bar"><div style="width:'+Math.round((mins/maxCarga)*100)+'%;background:var(--'+c+');"></div></div></div>'; });
       h+='</div>'; }
-    h+='<div class="card soft" style="margin-top:12px;"><label class="lbl">Agregar quehacer</label><div class="field"><input id="qN" placeholder="Cocinar, trapear, patio, baño…"></div><div class="row" style="gap:8px;margin-bottom:8px;"><select id="qNivel" class="smallinput grow"><option value="1">Ligera</option><option value="2" selected>Media</option><option value="3">Pesada</option></select><select id="qFreq" class="smallinput grow"><option value="diario">Todos los días</option><option value="dias" selected>Días específicos</option></select></div><div id="qDias" class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:8px;">'+DIAS.map(function(d,i){return '<button type="button" class="daybtn" data-pd="'+i+'">'+d+'</button>';}).join("")+'</div><button class="btn primary block" id="qAdd">Agregar</button></div>';
+    var topeQue=limite("quehaceres"), queEnTope=tareas.length>=topeQue;
+    if(queEnTope) h+=cardLimite("Llegaste al límite de "+topeQue+" quehaceres. Hazte Premium para agregar sin límite.");
+    else h+='<div class="card soft" style="margin-top:12px;"><label class="lbl">Agregar quehacer'+(isFinite(topeQue)?' ('+tareas.length+'/'+topeQue+')':'')+'</label><div class="field"><input id="qN" placeholder="Cocinar, trapear, patio, baño…"></div><div class="row" style="gap:8px;margin-bottom:8px;"><select id="qNivel" class="smallinput grow"><option value="1">Ligera</option><option value="2" selected>Media</option><option value="3">Pesada</option></select><select id="qFreq" class="smallinput grow"><option value="diario">Todos los días</option><option value="dias" selected>Días específicos</option></select></div><div id="qDias" class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:8px;">'+DIAS.map(function(d,i){return '<button type="button" class="daybtn" data-pd="'+i+'">'+d+'</button>';}).join("")+'</div><button class="btn primary block" id="qAdd">Agregar</button></div>';
     if(tareas.length>0){ h+='<p class="muted" style="margin:14px 0 6px;">Tus quehaceres ('+tareas.length+')</p>';
       tareas.forEach(function(t){ var nv=NIVELES[t.nivel||2],ft=t.freq==="diario"?"Todos los días":(t.dias&&t.dias.length?t.dias.map(function(d){return DIAS[d];}).join(", "):"sin días");
         h+='<div class="card"><div class="row"><span style="font-size:16px;">🧹</span><div class="grow"><div style="font-weight:600;">'+esc(t.nombre)+'</div><div class="muted">'+nv.nombre+' · +'+nv.pts+' pts · '+esc(ft)+'</div></div><select class="smallinput" data-lvl="'+t.id+'"><option value="1" '+((t.nivel||2)==1?"selected":"")+'>Ligera</option><option value="2" '+((t.nivel||2)==2?"selected":"")+'>Media</option><option value="3" '+((t.nivel||2)==3?"selected":"")+'>Pesada</option></select><button class="del" data-del="'+t.id+'">🗑️</button></div></div>'; }); }
     content.innerHTML=h;
+    wireGoPrem();
     var picked={}; var freqSel=document.getElementById("qFreq"),diasWrap=document.getElementById("qDias");
-    function syncFreq(){ diasWrap.style.display=freqSel.value==="dias"?"flex":"none"; } syncFreq(); freqSel.onchange=syncFreq;
-    Array.prototype.forEach.call(diasWrap.querySelectorAll("[data-pd]"),function(b){ b.onclick=function(){ var d=b.getAttribute("data-pd"); if(picked[d]){delete picked[d];b.classList.remove("on");}else{picked[d]=true;b.classList.add("on");} }; });
+    if(freqSel&&diasWrap){
+      var syncFreq=function(){ diasWrap.style.display=freqSel.value==="dias"?"flex":"none"; }; syncFreq(); freqSel.onchange=syncFreq;
+      Array.prototype.forEach.call(diasWrap.querySelectorAll("[data-pd]"),function(b){ b.onclick=function(){ var d=b.getAttribute("data-pd"); if(picked[d]){delete picked[d];b.classList.remove("on");}else{picked[d]=true;b.classList.add("on");} }; });
+    }
     document.getElementById("tope").onchange=function(e){ state.topePesada=+e.target.value; save(); render(); };
     document.getElementById("rPrev").onclick=function(){ state.rotSemana=Math.max(0,state.rotSemana-1); save(); render(); };
     document.getElementById("rNext").onclick=function(){ state.rotSemana++; save(); render(); };
-    document.getElementById("qAdd").onclick=function(){ var n=document.getElementById("qN").value.trim(),nivel=+document.getElementById("qNivel").value,freq=freqSel.value; if(!n)return; var dias=freq==="diario"?[0,1,2,3,4,5,6]:Object.keys(picked).map(Number).sort(); if(freq==="dias"&&dias.length===0){setStatus("Elige al menos un día");return;} state.tareas.push({id:uid(),nombre:n,nivel:nivel,freq:freq,dias:dias}); save(); render(); };
+    var qAddBtn=document.getElementById("qAdd");
+    if(qAddBtn) qAddBtn.onclick=function(){ if(state.tareas.length>=limite("quehaceres")){ irPremium(); return; } var n=document.getElementById("qN").value.trim(),nivel=+document.getElementById("qNivel").value,freq=freqSel.value; if(!n)return; var dias=freq==="diario"?[0,1,2,3,4,5,6]:Object.keys(picked).map(Number).sort(); if(freq==="dias"&&dias.length===0){setStatus("Elige al menos un día");return;} state.tareas.push({id:uid(),nombre:n,nivel:nivel,freq:freq,dias:dias}); save(); render(); };
     Array.prototype.forEach.call(content.querySelectorAll("[data-lvl]"),function(s){ s.onchange=function(){ var t=state.tareas.filter(function(x){return x.id===s.getAttribute("data-lvl");})[0]; if(t)t.nivel=+s.value; save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ state.tareas=state.tareas.filter(function(x){return x.id!==b.getAttribute("data-del");}); save(); render(); }; });
     Array.prototype.forEach.call(content.querySelectorAll("[data-check]"),function(b){ b.onclick=function(){ var parts=b.getAttribute("data-check").split("|"),key=parts[0],nivel=+parts[1],user=parts[2]; var cur=state.checks[key]&&state.checks[key].done;
@@ -800,6 +939,7 @@
   }
 
   function renderAsignadas(){
+    if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Encargos es Premium","La sección de niños: asigna encargos a tus hijos para que ganen puntos. Desbloquéalo con Premium."); wireGoPrem(); return; }
     var admin=esAdmin(); state.asignadas=state.asignadas||[];
     var h='<div class="sec-title">📌 Encargos</div>';
     h+='<div class="card soft" style="background:var(--info-bg);border:none;font-size:13px;">'+(admin
@@ -920,6 +1060,7 @@
   }
 
   function renderCierre(){
+    if(!esPremium()){ content.innerHTML=cardBloqueoPremium("Cierre de mes es Premium","Resumen mensual completo: cuentas, despensa, ahorro y saldo libre, listo para copiar. Desbloquéalo con Premium."); wireGoPrem(); return; }
     var calc=calcularAportes();
     var aprobados=state.ahorros.filter(function(a){return a.estado==="aprobado";});
     var ahorroTotal=aprobados.reduce(function(s,a){return s+(+a.monto||0);},0);
