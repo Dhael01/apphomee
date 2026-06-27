@@ -200,8 +200,12 @@
   /* Capa de hadas en PRIMER PLANO (sobre el contenido, sin bloquear clics) */
   #escenaHadas{position:fixed;inset:0;z-index:45;pointer-events:none;overflow:hidden;}
   #escenaHadas .deco{position:absolute;}
-  .hada .ala{fill:rgba(160,215,255,.5);stroke:rgba(120,190,255,.55);stroke-width:.5;}
-  .hada .cuerpo{fill:#fff6c0;}
+  .hada .ala{fill:rgba(190,225,255,.5);stroke:rgba(140,200,255,.6);stroke-width:.5;}
+  .hada .vestido{fill:#f3a6c6;}
+  .hada .cabeza{fill:#ffe3c4;}
+  .hada .pelo{fill:#d9a85a;}
+  .hada .brazo,.hada .pierna{stroke:#ffe3c4;stroke-width:1.6;stroke-linecap:round;fill:none;}
+  .hada .chispa path{fill:#fff3b0;}
   .hada .brillo{fill:#ffe98a;transform-box:fill-box;transform-origin:center;animation:hadaTwinkle 2.4s ease-in-out infinite;}
   .hada-wrap{animation:hadaFloat 7s ease-in-out infinite;}
   .hada-wrap.h2{animation-duration:8.5s;animation-delay:-2.5s;}
@@ -340,7 +344,19 @@
   // Hadas: capa SEPARADA en primer plano (sobre el contenido) para que se vean
   function escenaHadasHTML(id){
     if(id!=="bosque") return "";
-    var hada='<g class="hada"><ellipse class="ala" cx="-5" cy="-3" rx="6" ry="10" transform="rotate(-28 -5 -3)"/><ellipse class="ala" cx="5" cy="-3" rx="6" ry="10" transform="rotate(28 5 -3)"/><ellipse class="ala" cx="-5" cy="6" rx="4.5" ry="8" transform="rotate(-150 -5 6)"/><ellipse class="ala" cx="5" cy="6" rx="4.5" ry="8" transform="rotate(150 5 6)"/><circle class="brillo" cx="0" cy="0" r="10"/><circle class="cuerpo" cx="0" cy="0" r="3.2"/></g>';
+    var hada='<g class="hada">'+
+      '<circle class="brillo" cx="0" cy="-1" r="13"/>'+
+      '<ellipse class="ala" cx="-7" cy="-5" rx="7.5" ry="12" transform="rotate(-32 -7 -5)"/>'+
+      '<ellipse class="ala" cx="7" cy="-5" rx="7.5" ry="12" transform="rotate(32 7 -5)"/>'+
+      '<ellipse class="ala" cx="-6" cy="5" rx="5.5" ry="9" transform="rotate(-152 -6 5)"/>'+
+      '<ellipse class="ala" cx="6" cy="5" rx="5.5" ry="9" transform="rotate(152 6 5)"/>'+
+      '<path class="vestido" d="M0 -5 L-6 13 Q0 16 6 13 Z"/>'+
+      '<path class="pierna" d="M-2 13 L-3 18"/><path class="pierna" d="M2 13 L3 18"/>'+
+      '<path class="brazo" d="M-1 -4 L-8 0"/><path class="brazo" d="M1 -4 L8 -2"/>'+
+      '<circle class="cabeza" cx="0" cy="-9" r="3.6"/>'+
+      '<path class="pelo" d="M-3.6 -9 Q-4.4 -13.6 0 -13 Q4.4 -13.6 3.6 -9 Q2 -11 0 -11 Q-2 -11 -3.6 -9z"/>'+
+      '<g class="chispa" transform="translate(9,-3)"><path d="M0 -3 L1 -1 L3 0 L1 1 L0 3 L-1 1 L-3 0 L-1 -1z"/></g>'+
+      '</g>';
     return '<svg class="deco bosque hada-wrap" width="46" height="46" viewBox="-23 -23 46 46" style="top:9%;left:4%;">'+hada+'</svg>'+
            '<svg class="deco bosque hada-wrap h2" width="38" height="38" viewBox="-19 -19 38 38" style="top:6%;right:4%;">'+hada+'</svg>'+
            '<svg class="deco bosque hada-wrap h3" width="30" height="30" viewBox="-15 -15 30 30" style="bottom:15%;right:7%;">'+hada+'</svg>';
